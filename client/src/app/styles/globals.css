@@ -1,0 +1,147 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+/* Варианты data-open/data-closed и keyframes для компонентов shadcn/ui */
+@import 'shadcn/tailwind.css';
+
+@custom-variant dark (&:is(.dark *));
+
+/* Токены макета (дизайн-система бронирования переговорных) */
+@theme {
+  --color-blue-700: #475569;
+  --color-blue-100: #e2e8f0;
+  --color-gray-50: #ffffff;
+  --color-blue-900: #0f172a;
+  --color-teal-700: #0d9488;
+  --color-blue-400: #94a3b8;
+  --color-gray-100: #ededed;
+  --color-gray-950: #00000000;
+  --color-blue-50: #f8fafc;
+  --color-blue-500: #5478d9;
+  --color-red-400: #ef4444;
+  --color-teal-200: #ccfbf1;
+  --color-teal-800: #0f766e;
+  --color-blue-400-2: #99a3b0;
+  --color-blue-50-2: #f1f5f9;
+  --color-teal-700-2: #219678;
+  --color-gray-700: #4d4d4d;
+  --color-red-100: #fee2e2;
+  --color-gray-500: #8c8c8c;
+  --color-orange-800: #854d0e;
+  --color-red-600: #b91c1c;
+  --color-green-200: #d1fae5;
+  --color-teal-900: #065f46;
+  --color-gray-900: #212121;
+  --color-gray-600: #666666;
+  --color-teal-200-2: #ccfaf1;
+  --color-yellow-300: #fef08a;
+  --color-yellow-400: #fde047;
+  --color-teal-700-3: #10b981;
+  --color-gray-500-2: #808080;
+
+  --text-xs: 10px;
+  --text-sm: 11px;
+  --text-base: 12px;
+  --text-lg: 13px;
+  --text-xl: 14px;
+  --text-2xl: 15px;
+  --text-3xl: 16px;
+  --text-4xl: 18px;
+  --text-5xl: 20px;
+  --text-6xl: 22px;
+  --text-7xl: 24px;
+  --text-8xl: 28px;
+
+  --font-manrope: 'Manrope', system-ui, sans-serif;
+  --font-inter: 'Inter', system-ui, sans-serif;
+
+  /* Шаги шкалы равны пикселям макета: p-40 = 40px, p-6 = 6px */
+  --spacing-2: 2px;
+  --spacing-4: 4px;
+  --spacing-6: 6px;
+  --spacing-8: 8px;
+  --spacing-10: 10px;
+  --spacing-12: 12px;
+  --spacing-14: 14px;
+  --spacing-16: 16px;
+  --spacing-20: 20px;
+  --spacing-24: 24px;
+  --spacing-28: 28px;
+  --spacing-32: 32px;
+  --spacing-40: 40px;
+  --spacing-48: 48px;
+  --spacing-80: 80px;
+  --spacing-96: 96px;
+  --spacing-100: 100px;
+  --spacing-120: 120px;
+
+  --radius-4: 4px;
+  --radius-6: 6px;
+  --radius-8: 8px;
+  --radius-10: 10px;
+  --radius-12: 12px;
+  --radius-16: 16px;
+  --radius-20: 20px;
+
+  --shadow-1: 0px 12px 24px 0px #0f172a33;
+  --shadow-2: 0px 8px 24px 0px #0f172a14;
+  --shadow-3: 0px 8px 16px 0px #0000001a;
+  --shadow-4: 0px 4px 12px 0px #00000014;
+}
+
+/* Семантические переменные shadcn/ui поверх палитры макета */
+:root {
+  --radius: 12px;
+  --background: var(--color-blue-50);
+  --foreground: var(--color-blue-900);
+  --card: var(--color-gray-50);
+  --card-foreground: var(--color-blue-900);
+  --popover: var(--color-gray-50);
+  --popover-foreground: var(--color-blue-900);
+  --primary: var(--color-teal-700);
+  --primary-foreground: #ffffff;
+  --secondary: var(--color-blue-50-2);
+  --secondary-foreground: var(--color-blue-900);
+  --muted: var(--color-blue-50-2);
+  --muted-foreground: var(--color-blue-400);
+  --accent: var(--color-teal-200);
+  --accent-foreground: var(--color-teal-800);
+  --destructive: var(--color-red-600);
+  --border: var(--color-blue-100);
+  --input: var(--color-blue-100);
+  --ring: var(--color-teal-700);
+}
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 8px);
+  --radius-md: calc(var(--radius) - 4px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-manrope antialiased;
+  }
+}
