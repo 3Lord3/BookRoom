@@ -221,13 +221,18 @@ export function useDaySchedule(roomId: string, timezone: string): DayScheduleMod
     [validSelection, date, timezone],
   );
 
+  // Модалка открывается и без выделенного интервала — пустой формой;
+  // create оставляет её открытой после сброса from/to
   const book = () => {
-    if (!bookedInterval) {
-      return;
-    }
     updateParams((next) => {
-      next.set('from', bookedInterval.from);
-      next.set('to', bookedInterval.to);
+      if (bookedInterval) {
+        next.set('from', bookedInterval.from);
+        next.set('to', bookedInterval.to);
+      } else {
+        next.delete('from');
+        next.delete('to');
+      }
+      next.set('create', '1');
     });
   };
 

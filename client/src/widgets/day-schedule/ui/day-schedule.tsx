@@ -100,8 +100,8 @@ export function DaySchedule({ roomId, timezone }: DayScheduleProps) {
           <Timeline content={model.content} />
 
           <footer className="flex items-center justify-end py-12">
+            {/* Кнопка доступна всегда: без выбора открывает пустую форму бронирования */}
             <Button
-              disabled={!model.content.bookedInterval}
               onClick={model.content.book}
               className="h-auto rounded-8 px-24 py-10 text-xl font-semibold"
             >

@@ -69,9 +69,7 @@ describe('RoomDetailPage', () => {
 
     // Сетка уже отрисована по ответу с бронями, но ни подписи своей брони,
     // ни чужого «Занято» появиться не могут, пока не пришёл /me со знанием «своё/чужое»
-    expect(
-      await screen.findByRole('button', { name: '14:00–14:15 свободно' }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: '14:00–14:15 свободно' })).toBeInTheDocument();
     expect(screen.queryByText('Планирование спринта')).not.toBeInTheDocument();
     expect(screen.queryByText('Занято')).not.toBeInTheDocument();
 
@@ -83,8 +81,9 @@ describe('RoomDetailPage', () => {
   it('выбор свободного интервала активирует бронирование и пишет интервал в URL', async () => {
     const user = await renderRoomDetail(`/rooms/room-everest?date=${nextMondayIso()}`);
 
+    // Кнопка доступна всегда, даже без выделенного интервала
     const bookButton = await screen.findByRole('button', { name: 'Забронировать комнату' });
-    expect(bookButton).toBeDisabled();
+    expect(bookButton).toBeEnabled();
 
     const startCell = screen.getByRole('button', { name: '14:00–14:15 свободно' });
     await user.click(startCell);
@@ -105,6 +104,22 @@ describe('RoomDetailPage', () => {
     const params = new URLSearchParams(window.location.search);
     expect(params.get('from')).toBe(`${nextMondayIso()}T11:00:00.000Z`);
     expect(params.get('to')).toBe(`${nextMondayIso()}T11:45:00.000Z`);
+  });
+
+  it('без выделенного интервала кнопка открывает пустую форму бронирования', async () => {
+    const user = await renderRoomDetail(`/rooms/room-everest?date=${nextMondayIso()}`);
+
+    const bookButton = await screen.findByRole('button', { name: 'Забронировать комнату' });
+    await user.click(bookButton);
+
+    // Модалка открылась без интервала — предзаполненной сводки нет
+    expect(await screen.findByRole('heading', { name: 'Новое бронирование' })).toBeInTheDocument();
+    expect(screen.queryByText(/Бронирование на /)).not.toBeInTheDocument();
+
+    const params = new URLSearchParams(window.location.search);
+    expect(params.get('from')).toBeNull();
+    expect(params.get('to')).toBeNull();
+    expect(params.get('create')).toBe('1');
   });
 
   it('ошибка расписания показывает retry внутри карточки расписания', async () => {

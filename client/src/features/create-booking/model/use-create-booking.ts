@@ -16,6 +16,8 @@ import { formatSummary, formatToastDescription } from '../lib/format-summary';
 
 const FROM_KEY = 'from';
 const TO_KEY = 'to';
+/** Открывает модалку и без интервала из расписания — пустой формой */
+const CREATE_KEY = 'create';
 
 /** Достаёт ISO-мгновение из searchParams или null, если параметра нет. */
 function paramIso(params: URLSearchParams, key: string): string | null {
@@ -39,7 +41,7 @@ function valuesFromInterval(
 
 export interface CreateBookingModel {
   open: boolean;
-  /** Интервал из URL; null — модалка закрыта */
+  /** Интервал из URL для предзаполнения формы; null — открыта пустая форма */
   interval: { from: string; to: string } | null;
   /** Сводка под формой из текущих значений */
   summary: string | null;
@@ -66,7 +68,8 @@ export function useCreateBooking(
 
   const from = paramIso(searchParams, FROM_KEY);
   const to = paramIso(searchParams, TO_KEY);
-  const open = from !== null && to !== null && roomId !== null && timezone !== '';
+  const createOpen = searchParams.get(CREATE_KEY) === '1';
+  const open = ((from !== null && to !== null) || createOpen) && roomId !== null && timezone !== '';
   const interval = open && from && to ? { from, to } : null;
 
   const defaults = interval
@@ -108,15 +111,16 @@ export function useCreateBooking(
         )
       : null;
 
-  const clearInterval = () => {
+  const clearOpenParams = () => {
     const next = new URLSearchParams(searchParams);
     next.delete(FROM_KEY);
     next.delete(TO_KEY);
+    next.delete(CREATE_KEY);
     setSearchParams(next);
   };
 
   const close = () => {
-    clearInterval();
+    clearOpenParams();
     form.reset({ title: '', comment: '', ...defaults });
   };
 
@@ -165,7 +169,7 @@ export function useCreateBooking(
     close,
     resolveConflict: () => {
       form.clearErrors('root');
-      clearInterval();
+      clearOpenParams();
     },
     submit,
     form,
