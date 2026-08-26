@@ -5,6 +5,7 @@ import { useState } from 'react';
 
 import { MAX_AHEAD_DAYS } from '@shared/config/schedule';
 import { cn } from '@shared/lib/cn';
+import { todayInTimezone } from '@shared/lib/dates';
 import { Calendar } from '@shared/ui/calendar';
 import { Input } from '@shared/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@shared/ui/popover';
@@ -19,7 +20,6 @@ import {
 
 import { formatDateLabel } from '../lib/format-date-label';
 import { formatDuration } from '../lib/format-duration';
-import { todayInTimezone } from '../lib/schedule-defaults';
 import { applyTimeMask, isAlignedToStep, isValidTime } from '../lib/time';
 import type { RoomFiltersModel } from '../model/use-room-filters';
 

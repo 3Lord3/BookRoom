@@ -1,7 +1,8 @@
 import { useSearchParams } from 'react-router-dom';
 
-import { buildInterval } from '../lib/build-interval';
-import { defaultStartTimeInTimezone, todayInTimezone } from '../lib/schedule-defaults';
+import { buildInterval, todayInTimezone } from '@shared/lib/dates';
+
+import { defaultStartTimeInTimezone } from '../lib/schedule-defaults';
 
 const DATE_KEY = 'date';
 const TIME_KEY = 'time';

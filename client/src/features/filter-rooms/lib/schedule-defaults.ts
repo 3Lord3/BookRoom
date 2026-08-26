@@ -6,13 +6,6 @@ import {
   WORK_DAY_START_MINUTES,
 } from '@shared/config/schedule';
 
-/** Сегодняшняя дата в таймзоне офиса, «YYYY-MM-DD» */
-export function todayInTimezone(timezone: string, now = new Date()): string {
-  const localNow = new TZDate(now.getTime(), timezone);
-  const pad = (value: number) => String(value).padStart(2, '0');
-  return `${localNow.getFullYear()}-${pad(localNow.getMonth() + 1)}-${pad(localNow.getDate())}`;
-}
-
 /**
  * Время начала по умолчанию: ближайший будущий слот шагом 15 минут,
  * зажатый в рабочие часы офиса (09:00–19:45).
