@@ -2,11 +2,11 @@ import { Skeleton } from '@shared/ui/skeleton';
 
 const BAR = 'bg-gray-100';
 
-/** Строка статистики скелетона: круглый плейсхолдер иконки + текстовый бар */
+/** Строка статистики скелетона: плейсхолдер иконки + текстовый бар */
 function StatRow() {
   return (
     <div className="flex items-center gap-8">
-      <Skeleton className={`size-16 shrink-0 rounded-full ${BAR}`} />
+      <Skeleton className={`size-16 shrink-0 rounded-8 ${BAR}`} />
       <Skeleton className={`h-16 w-[200px] max-w-full rounded-4 ${BAR}`} />
     </div>
   );

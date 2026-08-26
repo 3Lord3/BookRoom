@@ -130,4 +130,32 @@ export const myBookings: Record<BookingScope, BookingView[]> = {
 myBookings.upcoming = [myBookings.all[0]!];
 myBookings.past = [myBookings.all[1]!];
 
-export const roomSchedule: BookingView[] = myBookings.all;
+/** Чужое бронирование — для блока «Занято» в расписании комнаты */
+const colleague: User = {
+  id: 'user-mariya',
+  login: 'morlova',
+  displayName: 'Мария Орлова',
+  email: 'morlova@example.test',
+  avatarUrl: null,
+  initials: 'МО',
+};
+
+// Тот же будущий понедельник, 15:00Z — 18:00–19:00 по Москве
+const colleagueStart = futureIso(15);
+
+export const roomSchedule: BookingView[] = [
+  ...myBookings.all,
+  {
+    id: 'booking-future-colleague',
+    roomId: everest.id,
+    userId: colleague.id,
+    title: 'Daily Sync / Команда разработки',
+    comment: null,
+    startsAt: colleagueStart,
+    endsAt: new Date(new Date(colleagueStart).getTime() + HOUR_MS).toISOString(),
+    createdAt: new Date().toISOString(),
+    room: everest,
+    office: everest.office,
+    owner: colleague,
+  },
+];

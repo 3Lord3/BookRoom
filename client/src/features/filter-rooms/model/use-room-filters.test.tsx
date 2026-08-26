@@ -48,4 +48,13 @@ describe('useRoomFilters', () => {
     expect(result.current.request.from).toBe('2026-09-01T07:15:00.000Z');
     expect(result.current.request.to).toBe('2026-09-01T07:45:00.000Z');
   });
+
+  it('битая дата из URL игнорируется и заменяется сегодняшним днём', () => {
+    const { result } = renderHook(() => useRoomFilters('Europe/Moscow'), {
+      wrapper: makeWrapper('/rooms?date=abc'),
+    });
+
+    expect(result.current.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(result.current.request.from).toBeDefined();
+  });
 });
