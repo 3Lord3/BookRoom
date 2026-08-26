@@ -86,3 +86,23 @@ export function formatToastDescription(
   const day = formatShortDate(interval.from, timezone);
   return `Комната ${roomName}, ${day}, ${start}–${end} ${timezoneAbbr(interval.from, timezone)}`;
 }
+
+/** «2 встречи» / «5 встреч» — количество вхождений серии повторов */
+export function formatOccurrences(count: number): string {
+  return `${count} ${pluralRu(count, 'встреча', 'встречи', 'встреч')}`;
+}
+
+/** Подпись повтора для сводки: «4 встречи еженедельно» */
+export function formatRecurrence(count: number): string {
+  return `${formatOccurrences(count)} еженедельно`;
+}
+
+/** Описание тоста серии: «4 встречи · Комната Эверест, 24 августа, 10:00–11:00 MSK» */
+export function formatSeriesToastDescription(
+  roomName: string,
+  series: Interval[],
+  timezone: string,
+): string {
+  const first = series[0]!;
+  return `${formatOccurrences(series.length)} · ${formatToastDescription(roomName, first, timezone)}`;
+}

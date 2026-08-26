@@ -9,6 +9,8 @@ import {
 } from '@shared/config/schedule';
 import { buildInterval } from '@shared/lib/dates';
 
+import { buildOccurrenceSeries } from './recurrence';
+
 /** Значения полей формы бронирования (до расчёта UTC-интервала). */
 export interface BookingFormValues {
   title: string;
@@ -16,6 +18,8 @@ export interface BookingFormValues {
   startTime: string;
   duration: number;
   comment: string;
+  repeat: 'none' | 'weekly';
+  occurrences: number;
 }
 
 export interface BookingSchemaContext {
@@ -48,6 +52,12 @@ export function createBookingSchema(context: BookingSchemaContext) {
         ),
       duration: z.number().int().min(TIME_STEP_MINUTES, 'Минимум 15 минут'),
       comment: z.string().trim().max(2_000).optional(),
+      repeat: z.enum(['none', 'weekly']),
+      occurrences: z
+        .number()
+        .int()
+        .min(2, 'Минимум 2 встречи')
+        .max(8, 'Максимум 8 встреч'),
     })
     .superRefine((values, ctx) => {
       if (values.duration % TIME_STEP_MINUTES !== 0) {
@@ -93,6 +103,19 @@ export function createBookingSchema(context: BookingSchemaContext) {
           path: ['startTime'],
           message: 'Время должно быть в рабочих часах с 09:00 до 20:00',
         });
+      }
+
+      // Повторы уходят на неделю вперёд каждым вхождением: последнее не должно
+      // вылезать за горизонт +30 дней, иначе серия упадёт частью своих POST
+      if (values.repeat === 'weekly' && values.occurrences > 1) {
+        const last = buildOccurrenceSeries(interval, values.occurrences).at(-1);
+        if (last && new Date(last.from).getTime() - now.getTime() > MAX_ADVANCE_MS) {
+          ctx.addIssue({
+            code: 'custom',
+            path: ['occurrences'],
+            message: `Повторы не должны выходить за ${MAX_AHEAD_DAYS} дней вперёд`,
+          });
+        }
       }
     });
 }
