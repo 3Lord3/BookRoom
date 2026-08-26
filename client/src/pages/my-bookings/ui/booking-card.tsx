@@ -6,6 +6,7 @@ import {
   formatBookingTimeRange,
   type BookingView,
 } from '@entities/booking';
+import { ExportBookingButton } from '@features/export-booking';
 import { Button } from '@shared/ui/button';
 
 interface BookingCardProps {
@@ -44,16 +45,19 @@ export function BookingCard({ booking, onCancel }: BookingCardProps) {
         </div>
       </div>
 
-      {onCancel && (
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => onCancel(booking)}
-          className="h-auto shrink-0 rounded-8 border-red-400 px-16 py-10 text-xl font-semibold text-red-400 hover:bg-red-100/50 hover:text-red-600"
-        >
-          Отменить
-        </Button>
-      )}
+      <div className="flex shrink-0 items-center gap-8">
+        <ExportBookingButton booking={booking} />
+        {onCancel && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onCancel(booking)}
+            className="h-auto shrink-0 rounded-8 border-red-400 px-16 py-10 text-xl font-semibold text-red-400 hover:bg-red-100/50 hover:text-red-600"
+          >
+            Отменить
+          </Button>
+        )}
+      </div>
     </article>
   );
 }
