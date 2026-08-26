@@ -50,4 +50,22 @@ describe('useExportBooking', () => {
     const anchor = clickSpy.mock.instances[0] as HTMLAnchorElement;
     expect(anchor.download).toBe('Daily Sync - Команда- релиз.ics');
   });
+
+  it('удаляет управляющие символы и хвостовые точки из имени файла', () => {
+    const { result } = renderHook(() => useExportBooking());
+
+    act(() => result.current({ ...booking, title: 'Daily Sync\u0000\n.' }));
+
+    const anchor = clickSpy.mock.instances[0] as HTMLAnchorElement;
+    expect(anchor.download).toBe('Daily Sync.ics');
+  });
+
+  it('не использует зарезервированные имена устройств Windows', () => {
+    const { result } = renderHook(() => useExportBooking());
+
+    act(() => result.current({ ...booking, title: 'CON' }));
+
+    const anchor = clickSpy.mock.instances[0] as HTMLAnchorElement;
+    expect(anchor.download).toBe('CON_.ics');
+  });
 });
