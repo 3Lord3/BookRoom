@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { App } from '../../../app/app';
 import { myBookings } from '../../../mocks/fixtures';
@@ -28,6 +28,25 @@ describe('MyBookingsPage', () => {
     // 09:00Z — 12:00 по Москве летом; аббревиатура таймзоны зависит от окружения
     expect(screen.getByText(/^12:00 - 13:00 /)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Отменить' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Скачать \.ics/ })).toBeInTheDocument();
+  });
+
+  it('«Скачать .ics» экспортирует встречу и показывает уведомление', async () => {
+    const createUrl = vi.spyOn(URL, 'createObjectURL');
+    const clickSpy = vi
+      .spyOn(HTMLAnchorElement.prototype, 'click')
+      .mockImplementation(() => undefined);
+    const user = await renderBookings();
+
+    await user.click(await screen.findByRole('button', { name: /Скачать \.ics/ }));
+
+    expect(await screen.findByText('Файл .ics сохранён')).toBeInTheDocument();
+    expect(clickSpy).toHaveBeenCalledTimes(1);
+    expect((clickSpy.mock.instances[0] as HTMLAnchorElement).download).toBe(
+      'Планирование спринта.ics',
+    );
+    const blob = createUrl.mock.calls[0]?.[0] as Blob;
+    expect(blob.type).toBe('text/calendar;charset=utf-8');
   });
 
   it('переключение на «Прошедшие» показывает прошлые бронирования без отмены', async () => {

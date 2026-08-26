@@ -14,6 +14,7 @@ export {
   formatBookingRoom,
   formatBookingTimeRange,
 } from './lib/format-booking';
+export { buildBookingIcs, toUtcStamp } from './lib/ics';
 export type {
   BookingScope,
   BookingView,
