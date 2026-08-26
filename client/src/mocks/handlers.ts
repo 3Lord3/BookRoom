@@ -64,9 +64,14 @@ export const handlers = [
   }),
 
   http.get(full('/bookings'), ({ request }) => {
-    const scope = new URL(request.url).searchParams.get('scope') ?? 'upcoming';
-    const items =
+    const url = new URL(request.url);
+    const scope = url.searchParams.get('scope') ?? 'upcoming';
+    const officeId = url.searchParams.get('officeId');
+    let items =
       scope === 'all' ? myBookings.all : scope === 'past' ? myBookings.past : myBookings.upcoming;
+    if (officeId) {
+      items = items.filter((booking) => booking.office.id === officeId);
+    }
     return HttpResponse.json({ items });
   }),
 

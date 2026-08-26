@@ -36,7 +36,7 @@ export function StateBlock({ tone, icon, title, subtitle, action }: StateBlockPr
       </div>
       <div className="flex max-w-[480px] flex-col items-center gap-12">
         <h2 className="text-6xl font-extrabold">{title}</h2>
-        <p className="text-2xl text-blue-700">{subtitle}</p>
+        <p className="whitespace-pre-line text-2xl text-blue-700">{subtitle}</p>
       </div>
       {action && (
         <Button onClick={action.onClick} className="h-auto rounded-8 px-24 py-12 text-xl font-bold">
