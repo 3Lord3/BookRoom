@@ -1,0 +1,38 @@
+# Зависимости и сборка
+node_modules/
+dist/
+build/
+out/
+coverage/
+*.tsbuildinfo
+.eslintcache
+.vite/
+
+# Логи и временные файлы
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+
+# Окружение
+.env
+.env.*
+!.env.example
+
+# IDE и ОС
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+design/
+figma-export/
+.figma-cache/
+
+AGENTS.md
+PLAN.md
+.opencode/
+.claude/
