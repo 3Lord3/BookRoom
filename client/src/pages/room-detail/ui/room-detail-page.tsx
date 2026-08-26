@@ -1,5 +1,6 @@
 import { ChevronRight, TriangleAlert } from 'lucide-react';
 
+import { CreateBookingDialog } from '@features/create-booking';
 import { Skeleton } from '@shared/ui/skeleton';
 import { StateBlock } from '@shared/ui/state-block';
 import { DaySchedule, DayScheduleSkeleton } from '@widgets/day-schedule';
@@ -45,7 +46,7 @@ function InfoCardSkeleton() {
 }
 
 export function RoomDetailPage() {
-  const { content } = useRoomDetailPage();
+  const { content, booking } = useRoomDetailPage();
 
   if (content.status === 'loading') {
     return (
@@ -90,6 +91,11 @@ export function RoomDetailPage() {
           <DaySchedule roomId={content.room.id} timezone={content.room.office.timezone} />
         </div>
       </div>
+      <CreateBookingDialog
+        model={booking}
+        subtitle={`Переговорная: ${content.room.name} (${content.room.office.name}, ${content.room.floor} этаж)`}
+        timezone={content.room.office.timezone}
+      />
     </main>
   );
 }

@@ -149,3 +149,8 @@
     @apply bg-background text-foreground font-manrope antialiased;
   }
 }
+
+/* Текст описания тоста читаемым цветом вместо серого, заданного sonner по умолчанию */
+[data-sonner-toast] [data-description] {
+  color: var(--popover-foreground) !important;
+}

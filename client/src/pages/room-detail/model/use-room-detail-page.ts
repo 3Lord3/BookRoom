@@ -2,6 +2,7 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import { useParams } from 'react-router-dom';
 
 import { useGetRoomQuery, type RoomSummary } from '@entities/room';
+import { useCreateBooking, type CreateBookingModel } from '@features/create-booking';
 import { toQueryState } from '@shared/api/query-state';
 
 export type RoomDetailContent =
@@ -11,6 +12,7 @@ export type RoomDetailContent =
 
 export interface RoomDetailPageModel {
   content: RoomDetailContent;
+  booking: CreateBookingModel;
 }
 
 export function useRoomDetailPage(): RoomDetailPageModel {
@@ -32,5 +34,12 @@ export function useRoomDetailPage(): RoomDetailPageModel {
     content = { status: 'success', room: queryState.data };
   }
 
-  return { content };
+  const room = queryState.status === 'success' ? queryState.data : null;
+  const booking = useCreateBooking(
+    roomId ?? null,
+    room?.office.timezone ?? '',
+    room?.name ?? '',
+  );
+
+  return { content, booking };
 }

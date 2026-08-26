@@ -28,6 +28,18 @@ class ResizeObserverStub {
 window.ResizeObserver =
   window.ResizeObserver ?? (ResizeObserverStub as unknown as typeof ResizeObserver);
 
+// jsdom не реализует PointerCapture — радиксовский Select полагается на него
+if (!Element.prototype.hasPointerCapture) {
+  Element.prototype.hasPointerCapture = () => false;
+  Element.prototype.setPointerCapture = () => undefined;
+  Element.prototype.releasePointerCapture = () => undefined;
+}
+
+// jsdom не реализует scrollIntoView — Select прокручивает к выбранному пункту
+if (!Element.prototype.scrollIntoView) {
+  Element.prototype.scrollIntoView = () => undefined;
+}
+
 beforeAll(() => {
   server.listen({ onUnhandledRequest: 'error' });
 });
