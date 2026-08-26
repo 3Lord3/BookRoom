@@ -1,6 +1,6 @@
 import type { BookingView } from '@shared/api/dto';
 
-/** ISO-строка → UTC-штамп `YYYYMMDDTHHMMSSZ`, который требует RFC 5545 для DTSTART/DTSTAMP. */
+// ISO-строка → UTC-штамп `YYYYMMDDTHHMMSSZ`, который требует RFC 5545 для DTSTART/DTSTAMP
 export function toUtcStamp(iso: string): string {
   const date = new Date(iso);
   const year = date.getUTCFullYear();
@@ -22,10 +22,33 @@ function icsLocation(booking: BookingView): string {
   return `${booking.office.name}, ${booking.office.address} — ${room}`;
 }
 
-/**
- * Собирает содержимое .ics-файла встречи из бронирования.
- * DTSTAMP ставится на момент экспорта, поэтому файл каждый раз формируется заново.
- */
+// Фолдинг строк по RFC 5545 §3.1: физическая строка не длиннее 75 октетов, продолжение
+// начинается с пробела; многобайтовый символ не должен разрываться между строками
+const foldIcsLine = (line: string): string => {
+  const encoder = new TextEncoder();
+  if (encoder.encode(line).length <= 75) return line;
+
+  const chunks: string[] = [];
+  let current = '';
+  let currentBytes = 0;
+  // строка продолжения теряет один октет на ведущий пробел
+  let limit = 75;
+  for (const char of [...line]) {
+    const charBytes = encoder.encode(char).length;
+    if (currentBytes + charBytes > limit) {
+      chunks.push(current);
+      current = '';
+      currentBytes = 0;
+      limit = 74;
+    }
+    current += char;
+    currentBytes += charBytes;
+  }
+  chunks.push(current);
+  return chunks.join('\r\n ');
+};
+
+// DTSTAMP ставится на момент экспорта, поэтому файл каждый раз формируется заново
 export function buildBookingIcs(booking: BookingView): string {
   const lines = [
     'BEGIN:VCALENDAR',
@@ -44,5 +67,5 @@ export function buildBookingIcs(booking: BookingView): string {
     lines.push(`DESCRIPTION:${escapeText(booking.comment)}`);
   }
   lines.push('END:VEVENT', 'END:VCALENDAR');
-  return `${lines.join('\r\n')}\r\n`;
+  return `${lines.map(foldIcsLine).join('\r\n')}\r\n`;
 }
