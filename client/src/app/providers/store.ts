@@ -1,13 +1,25 @@
 import { configureStore } from '@reduxjs/toolkit';
 
+import { createRealTimeSyncMiddleware } from '@features/real-time-sync';
 import { baseApi } from '@shared/api/base-api';
+import type { WsClient } from '@shared/lib/ws';
 
-export const createStore = () =>
+export interface CreateStoreOptions {
+  /** Клиент WS: наличие включает real-time middleware (в тестах — фейковый клиент). */
+  wsClient?: WsClient;
+}
+
+export const createStore = (options: CreateStoreOptions = {}) =>
   configureStore({
     reducer: {
       [baseApi.reducerPath]: baseApi.reducer,
     },
-    middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(baseApi.middleware),
+    middleware: (getDefaultMiddleware) => {
+      const chain = getDefaultMiddleware().concat(baseApi.middleware);
+      return options.wsClient
+        ? chain.concat(createRealTimeSyncMiddleware(options.wsClient))
+        : chain;
+    },
   });
 
 export type AppStore = ReturnType<typeof createStore>;
