@@ -9,6 +9,8 @@ import { RoomInfoCard } from './room-info-card';
 import { useRoomDetailPage } from '../model/use-room-detail-page';
 
 const BAR = 'bg-gray-100';
+// Вторичный оттенок плейсхолдеров (иконки фич, кнопка выбора дня) из макета
+const BAR_ALT = 'bg-blue-100-2';
 
 function BreadcrumbsSkeleton() {
   return (
@@ -33,8 +35,8 @@ function InfoCardSkeleton() {
       <div className="flex flex-col gap-12">
         {[0, 1, 2, 3].map((index) => (
           <div key={index} className="flex items-center gap-12">
-            <Skeleton className={`size-18 shrink-0 rounded-4 ${BAR}`} />
-            <Skeleton className={`h-18 w-[190px] rounded-4 ${BAR}`} />
+            <Skeleton className={`size-18 shrink-0 rounded-4 ${BAR_ALT}`} />
+            <Skeleton className={`h-18 w-full rounded-4 ${BAR}`} />
           </div>
         ))}
       </div>

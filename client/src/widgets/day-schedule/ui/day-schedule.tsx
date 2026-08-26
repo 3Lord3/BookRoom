@@ -189,7 +189,7 @@ export function DayScheduleSkeleton() {
           <Skeleton className="h-24 w-[204px] rounded-4 bg-gray-100" />
           <Skeleton className="h-16 w-[133px] rounded-4 bg-gray-100" />
         </div>
-        <Skeleton className="h-39 w-[149px] rounded-8 bg-gray-100" />
+        <Skeleton className="h-39 w-[149px] rounded-8 bg-blue-100-2" />
       </header>
       <div className="flex flex-col">
         {HOUR_LABELS.map((label) => (
