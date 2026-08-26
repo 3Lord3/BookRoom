@@ -150,7 +150,55 @@
   }
 }
 
-/* Текст описания тоста читаемым цветом вместо серого, заданного sonner по умолчанию */
-[data-sonner-toast] [data-description] {
-  color: var(--popover-foreground) !important;
+/* Тост: белая карточка с teal-рамкой, круглой иконкой и крестиком.
+   !important — стили sonner инжектятся позже globals.css и иначе перебивают настройки */
+[data-sonner-toast][data-styled='true'] {
+  padding: 20px !important;
+  gap: 16px !important;
+  border-radius: 12px !important;
+  border-color: var(--color-teal-700-3) !important;
+  background: var(--color-gray-50) !important;
+  box-shadow: var(--shadow-3) !important;
+}
+
+[data-sonner-toast][data-styled='true'] [data-icon] {
+  width: 36px !important;
+  height: 36px !important;
+  margin: 0 !important;
+  border-radius: 50% !important;
+  justify-content: center !important;
+  background: var(--color-green-200) !important;
+}
+
+[data-sonner-toast][data-styled='true'] [data-icon] svg {
+  width: 20px !important;
+  height: 20px !important;
+  margin: 0 !important;
+}
+
+[data-sonner-toast][data-styled='true'] [data-title] {
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  line-height: 21.86px !important;
+  color: var(--color-blue-900) !important;
+}
+
+/* Текст описания тоста вместо серого, заданного sonner по умолчанию */
+[data-sonner-toast][data-styled='true'] [data-description] {
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  line-height: 17.76px !important;
+  color: var(--color-blue-700) !important;
+}
+
+[data-sonner-toast][data-styled='true'] [data-close-button] {
+  position: static !important;
+  order: 10 !important;
+  margin-left: auto !important;
+  width: 24px !important;
+  height: 24px !important;
+  border: none !important;
+  background: transparent !important;
+  transform: none !important;
+  color: var(--color-blue-400) !important;
 }
