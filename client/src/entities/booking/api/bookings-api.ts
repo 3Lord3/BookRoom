@@ -27,6 +27,26 @@ export const bookingsApi = baseApi.injectEndpoints({
     cancelBooking: build.mutation<void, string>({
       query: (bookingId) => ({ url: `/bookings/${bookingId}`, method: 'DELETE' }),
       invalidatesTags: ['MyBookings', 'Room', 'RoomSchedule'],
+      async onQueryStarted(bookingId, { dispatch, getState, queryFulfilled }) {
+        // Оптимистичная отмена: бронирование исчезает из всех закэшированных списков
+        // сразу, ещё до ответа сервера; при сбое изменения откатываются
+        const cachedArgs = bookingsApi.util.selectCachedArgsForQuery(getState(), 'getMyBookings');
+        const rollbacks = cachedArgs.map((args) =>
+          dispatch(
+            bookingsApi.util.updateQueryData('getMyBookings', args, (draft) => {
+              const index = draft.findIndex((booking) => booking.id === bookingId);
+              if (index !== -1) {
+                draft.splice(index, 1);
+              }
+            }),
+          ),
+        );
+        try {
+          await queryFulfilled;
+        } catch {
+          rollbacks.forEach((rollback) => rollback.undo());
+        }
+      },
     }),
   }),
 });

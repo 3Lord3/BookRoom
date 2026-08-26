@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatShortDate, formatSummary, formatToastDescription } from './format-summary';
+import {
+  formatOccurrences,
+  formatRecurrence,
+  formatSeriesToastDescription,
+  formatShortDate,
+  formatSummary,
+  formatToastDescription,
+} from './format-summary';
 
 const TZ = 'Europe/Moscow';
 // Летом Москва = UTC+3: 07:00Z — это 10:00 по Москве
@@ -31,6 +38,27 @@ describe('formatToastDescription', () => {
     // Аббревиатура таймзоны зависит от окружения (MSK / GMT+3) — проверяем детерминированную часть
     expect(formatToastDescription('Эверест', { from: FROM, to: TO }, TZ)).toMatch(
       /^Комната Эверест, 24 августа, 10:00–11:00 /,
+    );
+  });
+});
+
+describe('форматтеры серии', () => {
+  it('formatOccurrences склоняет «встреча/встречи/встреч»', () => {
+    expect(formatOccurrences(2)).toBe('2 встречи');
+    expect(formatOccurrences(5)).toBe('5 встреч');
+  });
+
+  it('formatRecurrence дополняет количество словом «еженедельно»', () => {
+    expect(formatRecurrence(4)).toBe('4 встречи еженедельно');
+  });
+
+  it('formatSeriesToastDescription ведёт описание от первого вхождения серии', () => {
+    const series = [
+      { from: FROM, to: TO },
+      { from: '2026-08-31T07:00:00.000Z', to: '2026-08-31T08:00:00.000Z' },
+    ];
+    expect(formatSeriesToastDescription('Эверест', series, TZ)).toMatch(
+      /^2 встречи · Комната Эверест, 24 августа, 10:00–11:00 /,
     );
   });
 });

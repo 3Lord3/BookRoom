@@ -137,4 +137,71 @@ describe('CreateBookingDialog', () => {
 
     expect(await screen.findByText(/Бронирование на /)).toHaveTextContent('(30 мин)');
   });
+
+  it('еженедельный повтор отправляет серию POST и закрывает модалку', async () => {
+    const { user } = await renderDialog();
+
+    const sent: string[] = [];
+    server.use(
+      http.post(`${API_BASE_URL}/bookings`, async ({ request }) => {
+        const body = (await request.json()) as { startsAt: string };
+        sent.push(body.startsAt);
+        return HttpResponse.json({ id: `booking-${sent.length}`, roomId: 'room-everest' }, {
+          status: 201,
+        });
+      }),
+    );
+
+    await user.type(screen.getByLabelText('Тема встречи *'), 'Еженедельный синк');
+    await user.click(screen.getByRole('combobox', { name: 'Повторение' }));
+    await user.click(within(screen.getByRole('listbox')).getByText('Каждую неделю'));
+
+    await user.click(screen.getByRole('button', { name: 'Забронировать' }));
+
+    // Заголовок тоста совпадает с одиночным созданием из соседнего теста, а sonner
+    // держит старые тосты в глобальном сторе — проверяем уникальное описание серии
+    expect(await screen.findByText(/^4 встречи · Комната Эверест/)).toBeInTheDocument();
+    await waitFor(() => expect(sent).toHaveLength(4));
+
+    // Каждое следующее вхождение серии — на неделю позже
+    const weekMs = 7 * 24 * 60 * 60 * 1000;
+    expect(new Date(sent[1]!).getTime() - new Date(sent[0]!).getTime()).toBe(weekMs);
+
+    await waitFor(() =>
+      expect(screen.queryByRole('heading', { name: 'Новое бронирование' })).not.toBeInTheDocument(),
+    );
+  });
+
+  it('при частичном сбое серии показывает сводный тост', async () => {
+    const { user } = await renderDialog();
+
+    let calls = 0;
+    server.use(
+      http.post(`${API_BASE_URL}/bookings`, async () => {
+        calls += 1;
+        if (calls === 2 || calls === 3) {
+          return HttpResponse.json(
+            {
+              error: {
+                code: 'BOOKING_CONFLICT',
+                message: 'Переговорная уже забронирована на выбранное время',
+              },
+            },
+            { status: 409 },
+          );
+        }
+        return HttpResponse.json({ id: `booking-${calls}`, roomId: 'room-everest' }, { status: 201 });
+      }),
+    );
+
+    await user.type(screen.getByLabelText('Тема встречи *'), 'Еженедельный синк');
+    await user.click(screen.getByRole('combobox', { name: 'Повторение' }));
+    await user.click(within(screen.getByRole('listbox')).getByText('Каждую неделю'));
+
+    await user.click(screen.getByRole('button', { name: 'Забронировать' }));
+
+    expect(await screen.findByText('Созданы не все бронирования')).toBeInTheDocument();
+    expect(screen.getByText('Создано 2 из 4')).toBeInTheDocument();
+    expect(calls).toBe(4);
+  });
 });

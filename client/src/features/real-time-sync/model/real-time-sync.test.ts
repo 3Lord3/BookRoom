@@ -208,6 +208,50 @@ describe('real-time-sync middleware', () => {
     await waitFor(() => counters.schedule >= 2 && counters.myBookings >= 2);
   });
 
+  it('booking.created перезапрашивает весь список комнат', async () => {
+    const counters = { rooms: 0 };
+    server.use(
+      http.get(full('/rooms'), () => {
+        counters.rooms += 1;
+        return HttpResponse.json({ items: rooms });
+      }),
+    );
+
+    const { store, ws } = await setup();
+    await store.dispatch(roomsApi.endpoints.getRooms.initiate({ officeId: 'office-moscow' }));
+    expect(counters.rooms).toBe(1);
+
+    ws.emit({
+      type: 'booking.created',
+      occurredAt: OCCURRED_AT,
+      data: { booking: { id: 'booking-new', roomId: 'room-everest' } },
+    });
+
+    await waitFor(() => counters.rooms >= 2);
+  });
+
+  it('booking.cancelled перезапрашивает весь список комнат', async () => {
+    const counters = { rooms: 0 };
+    server.use(
+      http.get(full('/rooms'), () => {
+        counters.rooms += 1;
+        return HttpResponse.json({ items: rooms });
+      }),
+    );
+
+    const { store, ws } = await setup();
+    await store.dispatch(roomsApi.endpoints.getRooms.initiate({ officeId: 'office-moscow' }));
+    expect(counters.rooms).toBe(1);
+
+    ws.emit({
+      type: 'booking.cancelled',
+      occurredAt: OCCURRED_AT,
+      data: { booking: { id: 'booking-existing', roomId: 'room-everest' } },
+    });
+
+    await waitFor(() => counters.rooms >= 2);
+  });
+
   it('room.availability_changed перезапрашивает список комнат и обновляет available', async () => {
     let call = 0;
     server.use(

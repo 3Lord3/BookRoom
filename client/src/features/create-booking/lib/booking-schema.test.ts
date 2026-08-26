@@ -13,6 +13,8 @@ const valid = {
   startTime: '10:00',
   duration: 60,
   comment: '',
+  repeat: 'none',
+  occurrences: 4,
 };
 
 describe('createBookingSchema', () => {
@@ -71,5 +73,43 @@ describe('createBookingSchema', () => {
     if (!result.success) {
       expect(result.error.issues[0]?.message).toBe('Минимум 15 минут');
     }
+  });
+
+  it('принимает еженедельный повтор с корректным числом вхождений', () => {
+    const result = schema().safeParse({ ...valid, repeat: 'weekly', occurrences: 4 });
+    expect(result.success).toBe(true);
+  });
+
+  it('отклоняет количество вхождений меньше 2', () => {
+    const result = schema().safeParse({ ...valid, repeat: 'weekly', occurrences: 1 });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const issue = result.error.issues.find((item) => item.path[0] === 'occurrences');
+      expect(issue?.message).toBe('Минимум 2 встречи');
+    }
+  });
+
+  it('отклоняет количество вхождений больше 8', () => {
+    const result = schema().safeParse({ ...valid, repeat: 'weekly', occurrences: 9 });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const issue = result.error.issues.find((item) => item.path[0] === 'occurrences');
+      expect(issue?.message).toBe('Максимум 8 встреч');
+    }
+  });
+
+  it('отклоняет серию, последнее вхождение которой выходит за +30 дней', () => {
+    // База 24.08 + 5 недель = 28.09, что дальше горизонта (23.09)
+    const result = schema().safeParse({ ...valid, repeat: 'weekly', occurrences: 6 });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const issue = result.error.issues.find((item) => item.path[0] === 'occurrences');
+      expect(issue?.message).toBe('Повторы не должны выходить за 30 дней вперёд');
+    }
+  });
+
+  it('принимает серию, укладывающуюся в +30 дней', () => {
+    const result = schema().safeParse({ ...valid, repeat: 'weekly', occurrences: 5 });
+    expect(result.success).toBe(true);
   });
 });

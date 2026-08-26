@@ -54,6 +54,9 @@ const DURATION_OPTIONS = Array.from(
   (_, index) => (index + 1) * TIME_STEP_MINUTES,
 );
 
+// Еженедельные повторы упираются в горизонт +30 дней, поэтому вхождений не больше 8
+const OCCURRENCE_OPTIONS = [2, 3, 4, 5, 6, 7, 8];
+
 function pluralRu(count: number, one: string, few: string, many: string): string {
   const mod10 = count % 10;
   const mod100 = count % 100;
@@ -217,6 +220,66 @@ function FormView({ model, subtitle, timezone }: CreateBookingDialogProps) {
             )}
           />
 
+          <div className="flex flex-row items-end gap-16">
+            <FormField
+              control={model.form.control}
+              name="repeat"
+              render={({ field }) => (
+                <FormItem className="flex-1">
+                  <FormLabel className="text-lg font-bold text-blue-700">Повторение</FormLabel>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <FormControl>
+                      <SelectTrigger className="h-auto w-full rounded-8 border-border px-14 py-10 text-xl data-[size=default]:h-auto [&>svg]:size-16 [&>svg]:opacity-100">
+                        <SelectValue />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent position="popper">
+                      <SelectGroup>
+                        <SelectItem value="none">Не повторять</SelectItem>
+                        <SelectItem value="weekly">Каждую неделю</SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage className="text-base font-semibold text-red-400" />
+                </FormItem>
+              )}
+            />
+
+            {watched.repeat === 'weekly' && (
+              <FormField
+                control={model.form.control}
+                name="occurrences"
+                render={({ field }) => (
+                  <FormItem className="flex-1">
+                    <FormLabel className="text-lg font-bold text-blue-700">
+                      Количество встреч
+                    </FormLabel>
+                    <Select
+                      value={String(field.value)}
+                      onValueChange={(value) => field.onChange(Number(value))}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="h-auto w-full rounded-8 border-border px-14 py-10 text-xl data-[size=default]:h-auto [&>svg]:size-16 [&>svg]:opacity-100">
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent position="popper">
+                        <SelectGroup>
+                          {OCCURRENCE_OPTIONS.map((count) => (
+                            <SelectItem key={count} value={String(count)}>
+                              {count} {pluralRu(count, 'встреча', 'встречи', 'встреч')}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage className="text-base font-semibold text-red-400" />
+                  </FormItem>
+                )}
+              />
+            )}
+          </div>
+
           <FormField
             control={model.form.control}
             name="comment"
@@ -257,7 +320,11 @@ function FormView({ model, subtitle, timezone }: CreateBookingDialogProps) {
             disabled={model.isSubmitting}
             className="h-auto rounded-8 px-20 py-10 text-xl font-semibold"
           >
-            {model.isSubmitting ? 'Создание...' : 'Забронировать'}
+            {model.progress
+              ? `Создание ${model.progress.done} из ${model.progress.total}...`
+              : model.isSubmitting
+                ? 'Создание...'
+                : 'Забронировать'}
           </Button>
         </DialogFooter>
       </form>

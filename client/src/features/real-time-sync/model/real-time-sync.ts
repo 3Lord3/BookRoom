@@ -78,11 +78,13 @@ function handleWsEvent(event: WsEvent, dispatch: SyncDispatch) {
   switch (event.type) {
     case 'booking.created':
     case 'booking.cancelled':
-      // Создание/отмена меняют расписание комнаты и «мои бронирования»
+      // Создание/отмена меняют не только расписание и «мои бронирования», но и доступность
+      // комнат в списке — перезапрашиваем его целиком, чтобы бейджи available не устарели
       dispatch(
         baseApi.util.invalidateTags([
           { type: 'MyBookings' },
           { type: 'RoomSchedule', id: event.data.booking.roomId },
+          { type: 'Room' },
         ]),
       );
       break;
