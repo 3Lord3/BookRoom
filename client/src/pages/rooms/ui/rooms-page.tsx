@@ -2,10 +2,10 @@ import { Building2, SearchX, TriangleAlert } from 'lucide-react';
 
 import { RoomFilters } from '@features/filter-rooms';
 import { OfficeSelector } from '@features/select-office';
+import { StateBlock } from '@shared/ui/state-block';
 
 import { RoomCard } from './room-card';
 import { RoomCardSkeleton } from './room-card-skeleton';
-import { StateBlock } from './state-block';
 import { useRoomsPage } from '../model/use-rooms-page';
 
 const SKELETON_COUNT = 6;
