@@ -126,4 +126,10 @@ export const errorHandlers = {
       { status: 500 },
     ),
   ),
+  cancelError: http.delete(full('/bookings/:bookingId'), async () =>
+    HttpResponse.json(
+      { error: { code: 'INTERNAL', message: 'Внутренняя ошибка сервера' } },
+      { status: 500 },
+    ),
+  ),
 };
