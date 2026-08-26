@@ -1,13 +1,18 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createWsClient, type WsSocketEventMap, type WsSocketLike } from './client';
+import {
+  createWsClient,
+  type WsConnectionStatus,
+  type WsSocketEventMap,
+  type WsSocketLike,
+} from './client';
 import type { WsEvent } from './types';
 
 class FakeSocket implements WsSocketLike {
   static instances: FakeSocket[] = [];
   closed = false;
   readonly url: string;
-  private readonly listeners = new Map<string, Array<(event: { data: unknown }) => void>>();
+  private readonly listeners = new Map<keyof WsSocketEventMap, Array<(event: unknown) => void>>();
 
   constructor(url: string) {
     this.url = url;
@@ -19,7 +24,7 @@ class FakeSocket implements WsSocketLike {
     listener: (event: WsSocketEventMap[K]) => void,
   ): void {
     const bucket = this.listeners.get(type) ?? [];
-    bucket.push(listener as (event: { data: unknown }) => void);
+    bucket.push(listener as (event: unknown) => void);
     this.listeners.set(type, bucket);
   }
 
@@ -27,8 +32,24 @@ class FakeSocket implements WsSocketLike {
     this.closed = true;
   }
 
+  private emit(type: keyof WsSocketEventMap, event: unknown): void {
+    this.listeners.get(type)?.forEach((listener) => listener(event));
+  }
+
   emitMessage(data: unknown): void {
-    this.listeners.get('message')?.forEach((listener) => listener({ data }));
+    this.emit('message', { data });
+  }
+
+  emitOpen(): void {
+    this.emit('open', undefined);
+  }
+
+  emitClose(): void {
+    this.emit('close', undefined);
+  }
+
+  emitError(): void {
+    this.emit('error', undefined);
   }
 }
 
@@ -41,6 +62,10 @@ const validEvent = JSON.stringify({
 describe('createWsClient', () => {
   beforeEach(() => {
     FakeSocket.instances = [];
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('connect открывает соединение на переданном URL', () => {
@@ -105,5 +130,108 @@ describe('createWsClient', () => {
     client.close();
 
     expect(FakeSocket.instances[0]!.closed).toBe(true);
+  });
+
+  it('subscribeStatus сразу сообщает текущий статус и смены при подключении', () => {
+    const client = createWsClient({ url: 'ws://example.test', WebSocketImpl: FakeSocket });
+    const statuses: WsConnectionStatus[] = [];
+    client.subscribeStatus((status) => statuses.push(status));
+    client.connect();
+
+    FakeSocket.instances[0]!.emitOpen();
+
+    expect(statuses).toEqual(['disconnected', 'connecting', 'connected']);
+  });
+
+  it('обрыв соединения переводит в reconnecting и переподключается с задержкой', () => {
+    vi.useFakeTimers();
+    const client = createWsClient({
+      url: 'ws://example.test',
+      WebSocketImpl: FakeSocket,
+      reconnectDelayMs: 100,
+    });
+    const statuses: WsConnectionStatus[] = [];
+    client.subscribeStatus((status) => statuses.push(status));
+    client.connect();
+    FakeSocket.instances[0]!.emitOpen();
+    FakeSocket.instances[0]!.emitClose();
+
+    expect(FakeSocket.instances).toHaveLength(1);
+    expect(statuses).toContain('reconnecting');
+
+    vi.advanceTimersByTime(100);
+
+    expect(FakeSocket.instances).toHaveLength(2);
+  });
+
+  it('попытка переподключения не гасит состояние reconnecting', () => {
+    vi.useFakeTimers();
+    const client = createWsClient({
+      url: 'ws://example.test',
+      WebSocketImpl: FakeSocket,
+      reconnectDelayMs: 100,
+    });
+    const statuses: WsConnectionStatus[] = [];
+    client.subscribeStatus((status) => statuses.push(status));
+    client.connect();
+    FakeSocket.instances[0]!.emitOpen();
+    FakeSocket.instances[0]!.emitClose();
+
+    vi.advanceTimersByTime(100);
+
+    expect(FakeSocket.instances).toHaveLength(2);
+    expect(statuses[statuses.length - 1]).toBe('reconnecting');
+  });
+
+  it('после ручного закрытия следующее соединение считается первичным', () => {
+    const client = createWsClient({ url: 'ws://example.test', WebSocketImpl: FakeSocket });
+    const statuses: WsConnectionStatus[] = [];
+    client.subscribeStatus((status) => statuses.push(status));
+    client.connect();
+    FakeSocket.instances[0]!.emitOpen();
+    client.close();
+
+    client.connect();
+
+    expect(FakeSocket.instances).toHaveLength(2);
+    expect(statuses.slice(-2)).toEqual(['disconnected', 'connecting']);
+  });
+
+  it('error и следующий за ним close не планируют переподключение дважды', () => {
+    vi.useFakeTimers();
+    const client = createWsClient({
+      url: 'ws://example.test',
+      WebSocketImpl: FakeSocket,
+      reconnectDelayMs: 100,
+    });
+    client.connect();
+    FakeSocket.instances[0]!.emitError();
+    FakeSocket.instances[0]!.emitClose();
+
+    vi.advanceTimersByTime(100);
+
+    expect(FakeSocket.instances).toHaveLength(2);
+  });
+
+  it('ручное закрытие останавливает переподключение', () => {
+    vi.useFakeTimers();
+    const client = createWsClient({
+      url: 'ws://example.test',
+      WebSocketImpl: FakeSocket,
+      reconnectDelayMs: 100,
+    });
+    const statuses: WsConnectionStatus[] = [];
+    client.subscribeStatus((status) => statuses.push(status));
+    client.connect();
+    FakeSocket.instances[0]!.emitOpen();
+
+    client.close();
+
+    expect(FakeSocket.instances[0]!.closed).toBe(true);
+    expect(statuses).toContain('disconnected');
+
+    vi.advanceTimersByTime(500);
+
+    expect(FakeSocket.instances).toHaveLength(1);
   });
 });

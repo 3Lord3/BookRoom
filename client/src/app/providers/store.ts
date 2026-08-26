@@ -1,6 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit';
 
-import { createRealTimeSyncMiddleware } from '@features/real-time-sync';
+import { connectionStatusReducer, createRealTimeSyncMiddleware } from '@features/real-time-sync';
 import { baseApi } from '@shared/api/base-api';
 import type { WsClient } from '@shared/lib/ws';
 
@@ -13,6 +13,7 @@ export const createStore = (options: CreateStoreOptions = {}) =>
   configureStore({
     reducer: {
       [baseApi.reducerPath]: baseApi.reducer,
+      connectionStatus: connectionStatusReducer,
     },
     middleware: (getDefaultMiddleware) => {
       const chain = getDefaultMiddleware().concat(baseApi.middleware);
