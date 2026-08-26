@@ -9,6 +9,8 @@ interface NavbarLink {
 interface NavbarModel {
   links: readonly NavbarLink[];
   viewer: QueryState<User>;
+  /** Имя в шапке в краткой форме макета: «Константин К.» */
+  shortDisplayName: string | null;
 }
 
 const LINKS = [
@@ -16,11 +18,19 @@ const LINKS = [
   { to: '/bookings', label: 'Мои бронирования' },
 ] as const;
 
+function shortName(displayName: string): string {
+  const [first = '', last = ''] = displayName.split(' ');
+  return last ? `${first} ${last[0]}.` : first;
+}
+
 export function useNavbar(): NavbarModel {
   const viewerResult = useGetViewerQuery();
+  const viewer = toQueryState(viewerResult);
 
   return {
     links: LINKS,
-    viewer: toQueryState(viewerResult),
+    viewer,
+    shortDisplayName:
+      viewer.status === 'success' ? shortName(viewer.data.displayName) : null,
   };
 }

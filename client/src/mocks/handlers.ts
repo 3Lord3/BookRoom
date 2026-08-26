@@ -12,8 +12,25 @@ export const handlers = [
   http.get(full('/offices'), () => HttpResponse.json({ items: offices })),
 
   http.get(full('/rooms'), ({ request }) => {
-    const officeId = new URL(request.url).searchParams.get('officeId');
-    const items = officeId ? rooms.filter((room) => room.officeId === officeId) : rooms;
+    const url = new URL(request.url);
+    const officeId = url.searchParams.get('officeId');
+    const minCapacity = Number(url.searchParams.get('minCapacity'));
+    const from = url.searchParams.get('from');
+    const to = url.searchParams.get('to');
+
+    let items = officeId ? rooms.filter((room) => room.officeId === officeId) : rooms;
+    if (minCapacity > 0) {
+      items = items.filter((room) => room.capacity >= minCapacity);
+    }
+    // Как в бэкенде: available появляется только при фильтрации по интервалу
+    if (from && to) {
+      items = items.map((room) => ({
+        ...room,
+        available: !roomSchedule.some(
+          (booking) => booking.roomId === room.id && booking.startsAt < to && booking.endsAt > from,
+        ),
+      }));
+    }
     return HttpResponse.json({ items });
   }),
 
