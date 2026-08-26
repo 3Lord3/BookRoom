@@ -20,14 +20,15 @@ describe('App', () => {
     window.history.replaceState({}, '', '/rooms');
     render(<App />);
 
-    expect(await screen.findByText('Константин Кузнецов')).toBeInTheDocument();
+    expect(await screen.findByText('Константин К.')).toBeInTheDocument();
   });
 
   it('редиректит с / на /rooms', () => {
     window.history.replaceState({}, '', '/');
     render(<App />);
 
-    expect(screen.getByRole('heading', { name: 'Переговорные' })).toBeInTheDocument();
+    // Пока офис не выбран, список переговорных не запрашивается
+    expect(screen.getByRole('heading', { name: 'Выберите офис' })).toBeInTheDocument();
   });
 
   it('показывает страницу 404 для неизвестного маршрута', () => {
