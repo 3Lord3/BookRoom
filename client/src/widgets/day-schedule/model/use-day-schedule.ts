@@ -89,6 +89,9 @@ export function useDaySchedule(roomId: string, timezone: string): DayScheduleMod
   const scheduleResult = useGetRoomBookingsQuery({ roomId, from: range.from, to: range.to });
   const viewerResult = useGetViewerQuery();
   const viewerId = viewerResult.data?.id ?? null;
+  // Свои брони различимы только по ответу /me: до него события скрыты целиком,
+  // иначе своя бронь мелькает обезличенным «Занято»; при ошибке /me все — как «Занято»
+  const viewerKnown = !viewerResult.isLoading;
 
   const slots = useMemo(() => {
     if (!scheduleResult.data) {
@@ -104,26 +107,27 @@ export function useDaySchedule(roomId: string, timezone: string): DayScheduleMod
   // игнорируется: валидность проверяется на каждом рендере, без эффекта
   const validSelection = selection !== null && isRangeFree(slots, selection) ? selection : null;
 
-  const events = useMemo<ScheduleEventModel[]>(
-    () =>
-      (scheduleResult.data ?? []).flatMap((booking) => {
-        const bounds = bookingLocalMinutes(booking, timezone);
-        if (!bounds) {
-          return [];
-        }
-        const own = booking.userId === viewerId;
-        return [
-          {
-            key: booking.id,
-            start: bounds.start,
-            end: bounds.end,
-            kind: own ? ('own' as const) : ('other' as const),
-            label: own ? booking.title : 'Занято',
-          },
-        ];
-      }),
-    [scheduleResult.data, timezone, viewerId],
-  );
+  const events = useMemo<ScheduleEventModel[]>(() => {
+    if (!viewerKnown) {
+      return [];
+    }
+    return (scheduleResult.data ?? []).flatMap((booking) => {
+      const bounds = bookingLocalMinutes(booking, timezone);
+      if (!bounds) {
+        return [];
+      }
+      const own = booking.userId === viewerId;
+      return [
+        {
+          key: booking.id,
+          start: bounds.start,
+          end: bounds.end,
+          kind: own ? ('own' as const) : ('other' as const),
+          label: own ? booking.title : 'Занято',
+        },
+      ];
+    });
+  }, [scheduleResult.data, timezone, viewerId, viewerKnown]);
 
   const onSlotClick = (slotIndex: number) => {
     if (slots[slotIndex]?.busy) {

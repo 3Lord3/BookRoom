@@ -1,10 +1,13 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { delay, http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
 
 import { App } from '../../../app/app';
+import { viewer } from '../../../mocks/fixtures';
 import { errorHandlers } from '../../../mocks/handlers';
 import { server } from '../../../mocks/server';
+import { API_BASE_URL } from '../../../shared/config/env';
 
 /** Дата ближайшего понедельника — синхронно с фикстурами бронирований */
 function nextMondayIso(): string {
@@ -44,6 +47,35 @@ describe('RoomDetailPage', () => {
     await renderRoomDetail(`/rooms/room-everest?date=${nextMondayIso()}`);
 
     // Своё бронирование — с названием, чужое — обезличенный блок «Занято»
+    expect(await screen.findByText('Планирование спринта')).toBeInTheDocument();
+    expect(screen.getByText('Занято')).toBeInTheDocument();
+  });
+
+  it('битый ?date= не роняет страницу — расписание открывается на сегодняшнем дне', async () => {
+    await renderRoomDetail('/rooms/room-everest?date=abc');
+
+    expect(await screen.findByRole('heading', { name: 'Эверест' })).toBeInTheDocument();
+    expect(await screen.findByText('Расписание на день')).toBeInTheDocument();
+  });
+
+  it('пока /me не ответил, своё бронирование не показывается как чужое «Занято»', async () => {
+    server.use(
+      http.get(`${API_BASE_URL}/me`, async () => {
+        await delay(150);
+        return HttpResponse.json(viewer);
+      }),
+    );
+    await renderRoomDetail(`/rooms/room-everest?date=${nextMondayIso()}`);
+
+    // Сетка уже отрисована по ответу с бронями, но ни подписи своей брони,
+    // ни чужого «Занято» появиться не могут, пока не пришёл /me со знанием «своё/чужое»
+    expect(
+      await screen.findByRole('button', { name: '14:00–14:15 свободно' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Планирование спринта')).not.toBeInTheDocument();
+    expect(screen.queryByText('Занято')).not.toBeInTheDocument();
+
+    // После ответа /me события раскрываются: своё — названием, чужое — «Занято»
     expect(await screen.findByText('Планирование спринта')).toBeInTheDocument();
     expect(screen.getByText('Занято')).toBeInTheDocument();
   });
