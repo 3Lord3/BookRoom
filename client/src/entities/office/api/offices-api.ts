@@ -5,6 +5,7 @@ export const officesApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
     getOffices: build.query<Office[], void>({
       query: () => '/offices',
+      transformResponse: (response: { items: Office[] }) => response.items,
       providesTags: ['Office'],
     }),
   }),
