@@ -1,6 +1,6 @@
 import { useSearchParams } from 'react-router-dom';
 
-import { buildInterval, todayInTimezone } from '@shared/lib/dates';
+import { buildInterval, parseDateParam, todayInTimezone } from '@shared/lib/dates';
 
 import { defaultStartTimeInTimezone } from '../lib/schedule-defaults';
 
@@ -52,7 +52,10 @@ export function useRoomFilters(timezone: string | null): RoomFiltersModel {
   const durationParam = searchParams.get(DURATION_KEY);
   const capacityParam = searchParams.get(CAPACITY_KEY);
 
-  const date = searchParams.get(DATE_KEY) ?? (timezone ? todayInTimezone(timezone) : null);
+  const date = parseDateParam(
+    searchParams.get(DATE_KEY),
+    timezone ? todayInTimezone(timezone) : null,
+  );
   const time =
     searchParams.get(TIME_KEY) ?? (timezone ? defaultStartTimeInTimezone(timezone) : null);
   const duration = durationParam ? Number(durationParam) : DEFAULT_DURATION_MINUTES;

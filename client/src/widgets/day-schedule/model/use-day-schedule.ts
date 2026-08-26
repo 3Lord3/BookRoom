@@ -11,7 +11,7 @@ import { useGetViewerQuery } from '@entities/viewer';
 import { toQueryState } from '@shared/api/query-state';
 import { MAX_AHEAD_DAYS } from '@shared/config/schedule';
 import type { Interval } from '@shared/lib/dates';
-import { dayRange, todayInTimezone } from '@shared/lib/dates';
+import { dayRange, parseDateParam, todayInTimezone } from '@shared/lib/dates';
 import {
   buildDaySlots,
   clampFreeRange,
@@ -64,10 +64,10 @@ export interface DayScheduleModel {
 export function useDaySchedule(roomId: string, timezone: string): DayScheduleModel {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const date = searchParams.get('date') ?? todayInTimezone(timezone);
+  const date = parseDateParam(searchParams.get('date'), todayInTimezone(timezone));
 
-  // Дата хранится вместе с диапазоном: смена дня делает выбор недействительным
-  // без эффекта, а валидность по свежим данным пересчитывается на каждом рендере
+  // Выбор привязан к своему дню: на другом дне он скрыт, но при возврате
+  // восстанавливается; валидность по свежим слотам пересчитывается на каждом рендере
   const [stored, setStored] = useState<{ date: string; range: SlotRange } | null>(null);
   const selection = stored?.date === date ? stored.range : null;
 
