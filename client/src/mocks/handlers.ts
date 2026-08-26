@@ -120,4 +120,10 @@ export const errorHandlers = {
         { status: 500 },
       );
     }),
+  submitError: http.post(full('/bookings'), async () =>
+    HttpResponse.json(
+      { error: { code: 'INTERNAL', message: 'Внутренняя ошибка сервера' } },
+      { status: 500 },
+    ),
+  ),
 };

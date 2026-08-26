@@ -1,6 +1,7 @@
 import { format, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { CalendarIcon, TriangleAlert } from 'lucide-react';
+import { useRef } from 'react';
 
 import {
   TIME_STEP_MINUTES,
@@ -8,6 +9,7 @@ import {
   WORK_DAY_START_MINUTES,
 } from '@shared/config/schedule';
 import { cn } from '@shared/lib/cn';
+import type { DaySlot, SlotRange } from '@shared/lib/slots';
 import { Button } from '@shared/ui/button';
 import { Calendar } from '@shared/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@shared/ui/popover';
@@ -122,8 +124,22 @@ function HourRow({ label }: { label: string }) {
 }
 
 function Timeline({ content }: { content: Extract<DayScheduleContent, { status: 'success' }> }) {
+  const selection = content.selection;
+  // Перетаскивание — только флаг захвата указателя; диапазон расширяет модель (onPress)
+  const draggingRef = useRef(false);
+
+  const endDrag = () => {
+    draggingRef.current = false;
+  };
+
   return (
-    <div className="relative flex flex-col">
+    // pointerup на контейнере, а не только на слотах: отпускание над колонкой
+    // часов иначе оставило бы флаг перетаскивания зажатым
+    <div
+      className="relative flex flex-col select-none"
+      onPointerLeave={endDrag}
+      onPointerUp={endDrag}
+    >
       {HOUR_LABELS.map((label) => (
         <HourRow key={label} label={label} />
       ))}
@@ -132,6 +148,10 @@ function Timeline({ content }: { content: Extract<DayScheduleContent, { status: 
         {content.events.map((event) => (
           <EventBlock key={event.key} event={event} />
         ))}
+
+        {/* Выбранный интервал рисуется единым блоком, а не подсветкой каждой ячейки */}
+        {selection && <SelectionBlock slots={content.slots} selection={selection} />}
+
         {content.slots.map(
           (slot, index) =>
             !slot.busy && (
@@ -140,24 +160,53 @@ function Timeline({ content }: { content: Extract<DayScheduleContent, { status: 
                 type="button"
                 aria-label={`${slotTimeLabel(slot)} свободно`}
                 aria-pressed={
-                  content.selection !== null &&
-                  index >= content.selection.startIndex &&
-                  index <= content.selection.endIndex
+                  selection !== null && index >= selection.startIndex && index <= selection.endIndex
                 }
-                onClick={() => content.onSlotClick(index)}
+                onPointerDown={() => {
+                  draggingRef.current = true;
+                  content.onPress(index);
+                }}
+                onPointerEnter={() => {
+                  if (draggingRef.current) {
+                    content.onDragOver(index);
+                  }
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    content.onPress(index);
+                  }
+                }}
                 style={{
                   top: `${(slot.start - WORK_DAY_START_MINUTES) * PX_PER_MINUTE}px`,
                   height: `${TIME_STEP_MINUTES * PX_PER_MINUTE}px`,
                 }}
-                className={cn(
-                  'absolute inset-x-0 cursor-pointer rounded-8 border border-transparent transition-colors hover:bg-teal-200/40',
-                  'aria-pressed:border-teal-700 aria-pressed:bg-teal-200/60',
-                )}
+                // Слоты внутри выбора прозрачны — подсветку даёт блок SelectionBlock
+                className="absolute inset-x-0 cursor-pointer rounded-8 transition-colors hover:bg-teal-200/40"
               />
             ),
         )}
       </div>
     </div>
+  );
+}
+
+/** Непрерывный блок выбранного диапазона: от начала первого слота до конца последнего */
+function SelectionBlock({ slots, selection }: { slots: DaySlot[]; selection: SlotRange }) {
+  const startSlot = slots[selection.startIndex];
+  const endSlot = slots[selection.endIndex];
+  if (!startSlot || !endSlot) {
+    return null;
+  }
+
+  return (
+    <div
+      style={{
+        top: `${(startSlot.start - WORK_DAY_START_MINUTES) * PX_PER_MINUTE}px`,
+        height: `${(endSlot.end - startSlot.start) * PX_PER_MINUTE}px`,
+      }}
+      className="absolute inset-x-0 rounded-8 border border-teal-700 bg-teal-200/60"
+    />
   );
 }
 

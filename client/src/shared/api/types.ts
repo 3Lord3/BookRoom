@@ -24,3 +24,15 @@ export function getApiErrorCode(error: unknown): string | null {
   }
   return null;
 }
+
+/** Достаёт человекочитаемое сообщение из FetchBaseQueryError, если это ошибка API. */
+export function getApiErrorMessage(error: unknown): string | null {
+  if (error && typeof error === 'object' && 'data' in error) {
+    const body = (error as { data: unknown }).data;
+    if (body && typeof body === 'object' && 'error' in body) {
+      const message = (body as ApiErrorBody).error.message;
+      return message ?? null;
+    }
+  }
+  return null;
+}

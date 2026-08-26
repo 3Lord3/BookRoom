@@ -41,7 +41,10 @@ export type DayScheduleContent =
       slots: DaySlot[];
       events: ScheduleEventModel[];
       selection: SlotRange | null;
-      onSlotClick: (slotIndex: number) => void;
+      /** Начало выбора: клик или зажатие мыши на слоте */
+      onPress: (slotIndex: number) => void;
+      /** Расширение диапазона при перетаскивании указателя по слотам */
+      onDragOver: (slotIndex: number) => void;
       /** Выбранный интервал как UTC-границы; null — выбор ещё не сделан */
       bookedInterval: Interval | null;
       book: () => void;
@@ -67,8 +70,14 @@ export function useDaySchedule(roomId: string, timezone: string): DayScheduleMod
   const date = parseDateParam(searchParams.get('date'), todayInTimezone(timezone));
 
   // Выбор привязан к своему дню: на другом дне он скрыт, но при возврате
-  // восстанавливается; валидность по свежим слотам пересчитывается на каждом рендере
-  const [stored, setStored] = useState<{ date: string; range: SlotRange } | null>(null);
+  // восстанавливается; валидность по свежим слотам пересчитывается на каждом рендере.
+  // origin различает выбор кликом и перетаскиванием — после drag следующее нажатие
+  // обязано начинать новый диапазон, а не расширять прежний
+  const [stored, setStored] = useState<{
+    date: string;
+    range: SlotRange;
+    origin: 'click' | 'drag';
+  } | null>(null);
   const selection = stored?.date === date ? stored.range : null;
 
   const updateParams = (mutate: (params: URLSearchParams) => void) => {
@@ -129,18 +138,23 @@ export function useDaySchedule(roomId: string, timezone: string): DayScheduleMod
     });
   }, [scheduleResult.data, timezone, viewerId, viewerKnown]);
 
-  const onSlotClick = (slotIndex: number) => {
+  const onPress = (slotIndex: number) => {
     if (slots[slotIndex]?.busy) {
       setStored(null);
       return;
     }
     setStored((current) => {
-      // Клик после смены дня начинает выбор заново: старый диапазон не читаем
       const previous = current?.date === date ? current.range : null;
-      if (!previous) {
-        return { date, range: { startIndex: slotIndex, endIndex: slotIndex } };
+      const previousOrigin = current?.date === date ? current.origin : null;
+      // После drag следующее нажатие начинает новый диапазон; origin возвращаем
+      // в click, чтобы последующие нажатия снова расширяли выбор
+      if (previousOrigin === 'drag') {
+        return { date, range: { startIndex: slotIndex, endIndex: slotIndex }, origin: 'click' };
       }
-      // Расширяем от ближней границы выбора к кликнутой ячейке: рост
+      if (!previous) {
+        return { date, range: { startIndex: slotIndex, endIndex: slotIndex }, origin: 'click' };
+      }
+      // Расширяем от ближней границы выбора к нажатой ячейке: рост
       // останавливается на первом занятом слоте (clampFreeRange)
       if (slotIndex > previous.endIndex) {
         return {
@@ -149,6 +163,7 @@ export function useDaySchedule(roomId: string, timezone: string): DayScheduleMod
             startIndex: slotIndex,
             endIndex: slotIndex,
           },
+          origin: 'click',
         };
       }
       if (slotIndex < previous.startIndex) {
@@ -158,10 +173,46 @@ export function useDaySchedule(roomId: string, timezone: string): DayScheduleMod
             startIndex: slotIndex,
             endIndex: slotIndex,
           },
+          origin: 'click',
         };
       }
-      // Клик внутри выбора начинает новый интервал с этой ячейки
-      return { date, range: { startIndex: slotIndex, endIndex: slotIndex } };
+      // Нажатие внутри выбора начинает новый интервал с этой ячейки
+      return { date, range: { startIndex: slotIndex, endIndex: slotIndex }, origin: 'click' };
+    });
+  };
+
+  // Расширение диапазона при перетаскивании: от якоря (начального слота) к курсору
+  const onDragOver = (slotIndex: number) => {
+    if (slots[slotIndex]?.busy) {
+      return;
+    }
+    setStored((current) => {
+      const previous = current?.date === date ? current.range : null;
+      if (!previous) {
+        return { date, range: { startIndex: slotIndex, endIndex: slotIndex }, origin: 'drag' };
+      }
+      if (slotIndex > previous.endIndex) {
+        return {
+          date,
+          range: clampFreeRange(slots, previous.startIndex, slotIndex) ?? {
+            startIndex: slotIndex,
+            endIndex: slotIndex,
+          },
+          origin: 'drag',
+        };
+      }
+      if (slotIndex < previous.startIndex) {
+        return {
+          date,
+          range: clampFreeRange(slots, previous.endIndex, slotIndex) ?? {
+            startIndex: slotIndex,
+            endIndex: slotIndex,
+          },
+          origin: 'drag',
+        };
+      }
+      // Возврат внутрь выбора не схлопывает его при перетаскивании
+      return { date, range: previous, origin: 'drag' };
     });
   };
 
@@ -197,7 +248,8 @@ export function useDaySchedule(roomId: string, timezone: string): DayScheduleMod
       slots,
       events,
       selection: validSelection,
-      onSlotClick,
+      onPress,
+      onDragOver,
       bookedInterval,
       book,
     };
