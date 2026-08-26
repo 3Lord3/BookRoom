@@ -61,4 +61,16 @@ describe('useCreateBooking', () => {
     act(() => result.current.close());
     expect(result.current.open).toBe(false);
   });
+
+  it('по create=1 без интервала открывается пустой формой', () => {
+    const { result } = renderHook(
+      () => useCreateBooking('room-everest', 'Europe/Moscow', 'Эверест'),
+      { wrapper: makeWrapper('/rooms/room-everest?create=1') },
+    );
+
+    expect(result.current.open).toBe(true);
+    expect(result.current.interval).toBeNull();
+    expect(result.current.form.getValues('date')).toBe('');
+    expect(result.current.summary).toBeNull();
+  });
 });

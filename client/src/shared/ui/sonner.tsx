@@ -1,14 +1,13 @@
 'use client';
 
-import {
-  CircleCheckIcon,
-  InfoIcon,
-  Loader2Icon,
-  OctagonXIcon,
-  TriangleAlertIcon,
-} from 'lucide-react';
+import { Check, Info, Loader2, OctagonX, TriangleAlert, X } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Toaster as Sonner, type ToasterProps } from 'sonner';
+
+// Иконка в бейдже тоста: цвет инверсии задаёт CSS по [data-icon] svg
+const badgeIcon = (Icon: typeof Check) => (
+  <Icon className="size-20 text-teal-900" strokeWidth={2} />
+);
 
 const Toaster = ({ ...props }: ToasterProps) => {
   const { theme = 'system' } = useTheme();
@@ -16,13 +15,19 @@ const Toaster = ({ ...props }: ToasterProps) => {
   return (
     <Sonner
       theme={theme as ToasterProps['theme']}
+      // Тост отображается карточкой сверху по центру
+      position="top-center"
+      offset={32}
+      closeButton
       className="toaster group"
+      toastOptions={{ closeButtonAriaLabel: 'Закрыть уведомление' }}
       icons={{
-        success: <CircleCheckIcon className="size-4" />,
-        info: <InfoIcon className="size-4" />,
-        warning: <TriangleAlertIcon className="size-4" />,
-        error: <OctagonXIcon className="size-4" />,
-        loading: <Loader2Icon className="size-4 animate-spin" />,
+        success: badgeIcon(Check),
+        info: badgeIcon(Info),
+        warning: badgeIcon(TriangleAlert),
+        error: badgeIcon(OctagonX),
+        loading: <Loader2 className="size-20 animate-spin text-teal-900" strokeWidth={2} />,
+        close: <X className="size-14 text-blue-400" strokeWidth={2} />,
       }}
       style={
         {
@@ -30,6 +35,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
           '--normal-text': 'var(--popover-foreground)',
           '--normal-border': 'var(--border)',
           '--border-radius': 'var(--radius)',
+          '--width': '560px',
         } as React.CSSProperties
       }
       {...props}

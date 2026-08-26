@@ -12,6 +12,8 @@ export interface OfficeSelectorModel {
   /** «14:35 МСК» для выбранного офиса либо null */
   localTime: string | null;
   select: (officeId: string) => void;
+  /** Сброс фильтра к «Все офисы» */
+  clear: () => void;
 }
 
 /**
@@ -33,6 +35,11 @@ export function useOfficeSelector(): OfficeSelectorModel {
     select: (officeId) => {
       const next = new URLSearchParams(searchParams);
       next.set('office', officeId);
+      setSearchParams(next);
+    },
+    clear: () => {
+      const next = new URLSearchParams(searchParams);
+      next.delete('office');
       setSearchParams(next);
     },
   };
