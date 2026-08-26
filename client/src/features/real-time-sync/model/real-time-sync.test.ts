@@ -6,8 +6,9 @@ import { officesApi } from '@entities/office';
 import { roomsApi } from '@entities/room';
 import { viewerApi } from '@entities/viewer';
 import { API_BASE_URL } from '@shared/config/env';
-import type { WsEvent } from '@shared/lib/ws';
+import type { WsConnectionStatus, WsEvent } from '@shared/lib/ws';
 
+import { selectConnectionStatus } from './connection-status-slice';
 import { realTimeStarted, realTimeStopped } from './real-time-sync';
 import { createStore } from '../../../app/providers/store';
 import { offices, rooms, viewer } from '../../../mocks/fixtures';
@@ -20,7 +21,14 @@ const OCCURRED_AT = '2026-08-19T10:00:00.000Z';
 
 function createFakeWsClient() {
   const handlers = new Set<(event: WsEvent) => void>();
-  const state = { connects: 0, closes: 0 };
+  const statusHandlers = new Set<(status: WsConnectionStatus) => void>();
+  const state = { connects: 0, closes: 0, status: 'disconnected' as WsConnectionStatus };
+
+  const emitStatus = (status: WsConnectionStatus) => {
+    state.status = status;
+    statusHandlers.forEach((handler) => handler(status));
+  };
+
   return {
     get connects(): number {
       return state.connects;
@@ -33,9 +41,12 @@ function createFakeWsClient() {
     },
     connect: () => {
       state.connects += 1;
+      emitStatus('connecting');
+      emitStatus('connected');
     },
     close: () => {
       state.closes += 1;
+      emitStatus('disconnected');
     },
     subscribe: (handler: (event: WsEvent) => void) => {
       handlers.add(handler);
@@ -43,7 +54,15 @@ function createFakeWsClient() {
         handlers.delete(handler);
       };
     },
+    subscribeStatus: (handler: (status: WsConnectionStatus) => void) => {
+      statusHandlers.add(handler);
+      handler(state.status);
+      return () => {
+        statusHandlers.delete(handler);
+      };
+    },
     emit: (event: WsEvent) => handlers.forEach((handler) => handler(event)),
+    emitStatus,
   };
 }
 
@@ -84,6 +103,43 @@ describe('real-time-sync middleware', () => {
 
     expect(ws.subscribers).toBe(0);
     expect(ws.closes).toBe(1);
+    expect(selectConnectionStatus(store.getState())).toBe('disconnected');
+  });
+
+  it('статус соединения сохраняется в стор', async () => {
+    const { store, ws } = await setup();
+
+    expect(selectConnectionStatus(store.getState())).toBe('connected');
+
+    ws.emitStatus('reconnecting');
+
+    expect(selectConnectionStatus(store.getState())).toBe('reconnecting');
+  });
+
+  it('после reconnect перезапрашивается весь активный кэш', async () => {
+    const counters = { rooms: 0, myBookings: 0 };
+    server.use(
+      http.get(full('/rooms'), () => {
+        counters.rooms += 1;
+        return HttpResponse.json({ items: rooms });
+      }),
+      http.get(full('/bookings'), () => {
+        counters.myBookings += 1;
+        return HttpResponse.json({ items: [] });
+      }),
+    );
+
+    const { store, ws } = await setup();
+    await store.dispatch(roomsApi.endpoints.getRooms.initiate({ officeId: 'office-moscow' }));
+    await store.dispatch(bookingsApi.endpoints.getMyBookings.initiate({ scope: 'all' }));
+    expect(counters.rooms).toBe(1);
+    expect(counters.myBookings).toBe(1);
+
+    // установленное соединение теряется и восстанавливается
+    ws.emitStatus('reconnecting');
+    ws.emitStatus('connected');
+
+    await waitFor(() => counters.rooms >= 2 && counters.myBookings >= 2);
   });
 
   it('booking.created перезапрашивает расписание комнаты и мои бронирования', async () => {

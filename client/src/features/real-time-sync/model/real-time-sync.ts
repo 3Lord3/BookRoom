@@ -8,10 +8,24 @@ import {
 import { baseApi } from '@shared/api/base-api';
 import type { WsClient, WsEvent } from '@shared/lib/ws';
 
+import { connectionStatusChanged } from './connection-status-slice';
+
 export const realTimeStarted = createAction('realTime/started');
 export const realTimeStopped = createAction('realTime/stopped');
 
 type SyncDispatch = ThunkDispatch<unknown, unknown, UnknownAction>;
+
+function invalidateAll(dispatch: SyncDispatch) {
+  dispatch(
+    baseApi.util.invalidateTags([
+      { type: 'Office' },
+      { type: 'Room' },
+      { type: 'RoomSchedule' },
+      { type: 'MyBookings' },
+      { type: 'Viewer' },
+    ]),
+  );
+}
 
 // Real-time-синхронизация. WS не хранит данные (единственный источник — RTK Query):
 // каждое событие лишь инвалидирует теги, и активные запросы перезапрашиваются сами
@@ -25,9 +39,23 @@ export function createRealTimeSyncMiddleware(wsClient: WsClient) {
       if (unsubscribe) {
         return;
       }
-      unsubscribe = wsClient.subscribe((event) => {
+      // После reconnect (не первый connect) broadcast-канал ничего не помнит —
+      // перезапрашиваем весь активный кэш, иначе события, пропущенные за обрыв, потеряются
+      let wasConnected = false;
+      const detachStatus = wsClient.subscribeStatus((status) => {
+        listenerApi.dispatch(connectionStatusChanged(status));
+        if (status === 'connected' && wasConnected) {
+          invalidateAll(listenerApi.dispatch);
+        }
+        wasConnected = wasConnected || status === 'connected';
+      });
+      const detachEvents = wsClient.subscribe((event) => {
         handleWsEvent(event, listenerApi.dispatch);
       });
+      unsubscribe = () => {
+        detachStatus();
+        detachEvents();
+      };
       wsClient.connect();
     },
   });
@@ -35,9 +63,11 @@ export function createRealTimeSyncMiddleware(wsClient: WsClient) {
   listener.startListening({
     actionCreator: realTimeStopped,
     effect: () => {
+      // Сначала закрываем, пока статус-подписка жива: финальный disconnected должен
+      // попасть в стор, иначе после остановки в нём застрянет reconnecting
+      wsClient.close();
       unsubscribe?.();
       unsubscribe = null;
-      wsClient.close();
     },
   });
 
@@ -61,15 +91,7 @@ function handleWsEvent(event: WsEvent, dispatch: SyncDispatch) {
       dispatch(baseApi.util.invalidateTags([{ type: 'Room' }]));
       break;
     case 'data.reset':
-      dispatch(
-        baseApi.util.invalidateTags([
-          { type: 'Office' },
-          { type: 'Room' },
-          { type: 'RoomSchedule' },
-          { type: 'MyBookings' },
-          { type: 'Viewer' },
-        ]),
-      );
+      invalidateAll(dispatch);
       break;
   }
 }
