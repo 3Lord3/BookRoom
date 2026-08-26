@@ -10,14 +10,16 @@ const fsPath = (layer: string) => fileURLToPath(new URL(`./src/${layer}`, import
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
-    alias: {
-      '@app': fsPath('app'),
-      '@pages': fsPath('pages'),
-      '@widgets': fsPath('widgets'),
-      '@features': fsPath('features'),
-      '@entities': fsPath('entities'),
-      '@shared': fsPath('shared'),
-    },
+    alias: [
+      // Голый импорт слоя ведёт на index.ts, подпути — на каталог слоя
+      { find: /^@app$/, replacement: fsPath('app/index.ts') },
+      { find: '@app', replacement: fsPath('app') },
+      { find: '@pages', replacement: fsPath('pages') },
+      { find: '@widgets', replacement: fsPath('widgets') },
+      { find: '@features', replacement: fsPath('features') },
+      { find: '@entities', replacement: fsPath('entities') },
+      { find: '@shared', replacement: fsPath('shared') },
+    ],
   },
   test: {
     environment: 'jsdom',
