@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux';
 import { selectConnectionStatus } from '@features/real-time-sync';
 
 export interface ConnectionBannerModel {
-  /** Баннер виден весь обрыв: клиент держит status = 'reconnecting' и во время попыток */
+  // Виден весь обрыв: статус держится в 'reconnecting' во время попыток
   visible: boolean;
 }
 

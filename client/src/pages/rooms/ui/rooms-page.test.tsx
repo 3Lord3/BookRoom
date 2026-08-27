@@ -6,7 +6,7 @@ import { App } from '../../../app/app';
 import { errorHandlers } from '../../../mocks/handlers';
 import { server } from '../../../mocks/server';
 
-/** Дата ближайшего понедельника — синхронно с фикстурами бронирований */
+// Дата ближайшего понедельника, синхронно с фикстурами
 function nextMondayIso(): string {
   const date = new Date();
   const daysUntilMonday = (8 - date.getUTCDay()) % 7 || 7;
@@ -44,7 +44,7 @@ describe('RoomsPage', () => {
   });
 
   it('при интервале помечает занятые комнаты как недоступные', async () => {
-    // Бронирование фикстур: Эверест, ближайший понедельник 12:00–13:00 по Москве
+    // Бронь фикстур: Эверест, понедельник 12:00–13:00 по Москве
     const url = `/rooms?office=office-moscow&date=${nextMondayIso()}&time=12:00&duration=60`;
     await renderRooms(url);
 

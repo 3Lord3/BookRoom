@@ -21,6 +21,6 @@ const connectionStatusSlice = createSlice({
 export const { connectionStatusChanged } = connectionStatusSlice.actions;
 export const connectionStatusReducer = connectionStatusSlice.reducer;
 
-// Минимальная форма слайса вместо RootState: селектор не знает про другие редьюсеры
+// Селектор не тянет RootState, достаточно формы слайса
 export const selectConnectionStatus = (state: { connectionStatus: ConnectionStatusState }) =>
   state.connectionStatus.status;

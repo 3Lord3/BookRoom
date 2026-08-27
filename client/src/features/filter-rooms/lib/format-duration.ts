@@ -10,7 +10,7 @@ function pluralRu(count: number, one: string, few: string, many: string): string
   return many;
 }
 
-/** Длительность в минутах → подпись: 15 → «15 мин», 60 → «1 час», 75 → «1 ч 15 мин» */
+// 15 → «15 мин», 60 → «1 час», 75 → «1 ч 15 мин»
 export function formatDuration(minutes: number): string {
   const hours = Math.floor(minutes / 60);
   const rest = minutes % 60;

@@ -68,4 +68,22 @@ describe('useExportBooking', () => {
     const anchor = clickSpy.mock.instances[0] as HTMLAnchorElement;
     expect(anchor.download).toBe('CON_.ics');
   });
+
+  it('подменяет зарезервированную базу имени до первой точки', () => {
+    const { result } = renderHook(() => useExportBooking());
+
+    act(() => result.current({ ...booking, title: 'NUL.notes' }));
+
+    const anchor = clickSpy.mock.instances[0] as HTMLAnchorElement;
+    expect(anchor.download).toBe('NUL_.notes.ics');
+  });
+
+  it('использует запасное имя, если название состоит из одних управляющих символов', () => {
+    const { result } = renderHook(() => useExportBooking());
+
+    act(() => result.current({ ...booking, title: '\u0000\n\t' }));
+
+    const anchor = clickSpy.mock.instances[0] as HTMLAnchorElement;
+    expect(anchor.download).toBe('встреча.ics');
+  });
 });

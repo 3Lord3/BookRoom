@@ -2,10 +2,8 @@ import type { Interval } from '@shared/lib/dates';
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
-/**
- * Серия одинаковых интервалов с шагом в неделю: от базового, count вхождений.
- * Арифметика в UTC-мгновениях, поэтому сдвиг на 7 дней не зависит от таймзон.
- */
+// Серия из count интервалов с шагом в неделю; арифметика в UTC-мгновениях,
+// поэтому сдвиг не зависит от таймзон
 export function buildOccurrenceSeries(base: Interval, count: number): Interval[] {
   const from = new Date(base.from).getTime();
   const to = new Date(base.to).getTime();

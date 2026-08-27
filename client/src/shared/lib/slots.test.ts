@@ -10,7 +10,7 @@ import {
 
 const freeSlots = () => buildDaySlots();
 
-/** Слот 12:00–13:00 занят (ячейки 12:00 … 12:45–13:00) */
+// Слот 12:00–13:00 занят
 const slotsWithNoonBusy = () => markBusySlots(freeSlots(), [{ start: 12 * 60, end: 13 * 60 }]);
 
 describe('buildDaySlots', () => {
@@ -60,7 +60,7 @@ describe('clampFreeRange', () => {
   it('расширяет диапазон назад от anchor к target', () => {
     const slots = slotsWithNoonBusy();
 
-    // 13:00 → 11:00: anchor 13:00 свободен, назад идём до 12:00
+    // anchor 13:00 свободен, назад идём до 12:00
     expect(clampFreeRange(slots, 16, 8)).toEqual({ startIndex: 16, endIndex: 16 });
   });
 
@@ -79,7 +79,7 @@ describe('clampFreeRange', () => {
 
 describe('slotRangeToInterval', () => {
   it('переводит диапазон слотов в UTC-интервал таймзоны офиса', () => {
-    // Летом Москва = UTC+3: 14:00–15:00 по Москве — это 11:00Z–12:00Z
+    // 14:00–15:00 по Москве = 11:00Z–12:00Z
     expect(
       slotRangeToInterval('2026-08-26', { startIndex: 20, endIndex: 23 }, 'Europe/Moscow'),
     ).toEqual({

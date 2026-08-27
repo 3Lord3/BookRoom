@@ -2,7 +2,6 @@ import { Skeleton } from '@shared/ui/skeleton';
 
 const BAR = 'bg-gray-100';
 
-/** Строка статистики скелетона: плейсхолдер иконки + текстовый бар */
 function StatRow() {
   return (
     <div className="flex items-center gap-8">
@@ -12,7 +11,7 @@ function StatRow() {
   );
 }
 
-/** Заглушка карточки на время загрузки списка — по структуре room-card из макета */
+// Заглушка карточки по структуре room-card
 export function RoomCardSkeleton() {
   return (
     <div className="flex h-full flex-col gap-16 rounded-16 border border-border bg-card p-20">

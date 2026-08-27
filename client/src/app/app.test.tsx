@@ -27,7 +27,7 @@ describe('App', () => {
     window.history.replaceState({}, '', '/');
     render(<App />);
 
-    // Пока офис не выбран, список переговорных не запрашивается
+    // Без выбранного офиса список не запрашивается
     expect(screen.getByRole('heading', { name: 'Выберите офис' })).toBeInTheDocument();
   });
 

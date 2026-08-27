@@ -4,15 +4,13 @@ import type { BookingView } from '@shared/api/dto';
 import { WORK_DAY_END_MINUTES, WORK_DAY_START_MINUTES } from '@shared/config/schedule';
 
 export interface LocalMinuteInterval {
-  /** Минуты суток в таймзоне офиса */
+  // Минуты суток офиса
   start: number;
   end: number;
 }
 
-/**
- * Границы бронирования в «минутах суток» таймзоны офиса, зажатые в рабочие часы.
- * null — пересечения с рабочим днём нет.
- */
+// Границы бронирования в минутах суток офиса, зажатые в рабочие часы;
+// null, если пересечения с рабочим днём нет
 export function bookingLocalMinutes(
   booking: Pick<BookingView, 'startsAt' | 'endsAt'>,
   timezone: string,

@@ -11,7 +11,7 @@ import { Button } from '@shared/ui/button';
 
 interface BookingCardProps {
   booking: BookingView;
-  /** null — отмена недоступна (прошедшее бронирование) */
+  // null, когда отмена недоступна (прошедшее бронирование)
   onCancel?: (booking: BookingView) => void;
 }
 

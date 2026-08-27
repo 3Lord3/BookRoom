@@ -9,7 +9,7 @@ import { errorHandlers } from '../../../mocks/handlers';
 import { server } from '../../../mocks/server';
 import { API_BASE_URL } from '../../../shared/config/env';
 
-/** Дата ближайшего понедельника — синхронно с фикстурами бронирований */
+// Дата ближайшего понедельника, синхронно с фикстурами
 function nextMondayIso(): string {
   const date = new Date();
   const daysUntilMonday = (8 - date.getUTCDay()) % 7 || 7;
@@ -46,7 +46,7 @@ describe('RoomDetailPage', () => {
   it('на день с бронированиями показывает своё и чужое события', async () => {
     await renderRoomDetail(`/rooms/room-everest?date=${nextMondayIso()}`);
 
-    // Своё бронирование — с названием, чужое — обезличенный блок «Занято»
+    // Своё бронирование подписано названием, чужое просто «Занято»
     expect(await screen.findByText('Планирование спринта')).toBeInTheDocument();
     expect(screen.getByText('Занято')).toBeInTheDocument();
   });
@@ -67,13 +67,12 @@ describe('RoomDetailPage', () => {
     );
     await renderRoomDetail(`/rooms/room-everest?date=${nextMondayIso()}`);
 
-    // Сетка уже отрисована по ответу с бронями, но ни подписи своей брони,
-    // ни чужого «Занято» появиться не могут, пока не пришёл /me со знанием «своё/чужое»
+    // Пока не пришёл /me, события скрыты целиком
     expect(await screen.findByRole('button', { name: '14:00–14:15 свободно' })).toBeInTheDocument();
     expect(screen.queryByText('Планирование спринта')).not.toBeInTheDocument();
     expect(screen.queryByText('Занято')).not.toBeInTheDocument();
 
-    // После ответа /me события раскрываются: своё — названием, чужое — «Занято»
+    // После /me своё подписано названием, чужое просто «Занято»
     expect(await screen.findByText('Планирование спринта')).toBeInTheDocument();
     expect(screen.getByText('Занято')).toBeInTheDocument();
   });
@@ -81,14 +80,14 @@ describe('RoomDetailPage', () => {
   it('выбор свободного интервала активирует бронирование и пишет интервал в URL', async () => {
     const user = await renderRoomDetail(`/rooms/room-everest?date=${nextMondayIso()}`);
 
-    // Кнопка доступна всегда, даже без выделенного интервала
+    // Кнопка доступна без выделенного интервала
     const bookButton = await screen.findByRole('button', { name: 'Забронировать комнату' });
     expect(bookButton).toBeEnabled();
 
     const startCell = screen.getByRole('button', { name: '14:00–14:15 свободно' });
     await user.click(startCell);
 
-    // Один клик даёт минимальный интервал 15 минут
+    // Один клик даёт минимальный интервал
     expect(bookButton).toBeEnabled();
 
     // Второй клик позже расширяет выбор до 14:00–14:45
@@ -100,7 +99,7 @@ describe('RoomDetailPage', () => {
 
     await user.click(bookButton);
 
-    // Летом Москва = UTC+3: 14:00–14:45 по Москве — это 11:00Z–11:45Z
+    // 14:00–14:45 по Москве = 11:00Z–11:45Z (UTC+3)
     const params = new URLSearchParams(window.location.search);
     expect(params.get('from')).toBe(`${nextMondayIso()}T11:00:00.000Z`);
     expect(params.get('to')).toBe(`${nextMondayIso()}T11:45:00.000Z`);
@@ -112,7 +111,7 @@ describe('RoomDetailPage', () => {
     const bookButton = await screen.findByRole('button', { name: 'Забронировать комнату' });
     await user.click(bookButton);
 
-    // Модалка открылась без интервала — предзаполненной сводки нет
+    // Модалка без интервала, сводки нет
     expect(await screen.findByRole('heading', { name: 'Новое бронирование' })).toBeInTheDocument();
     expect(screen.queryByText(/Бронирование на /)).not.toBeInTheDocument();
 

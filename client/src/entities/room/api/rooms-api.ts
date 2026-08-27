@@ -4,7 +4,7 @@ import type { RoomSummary } from '@shared/api/dto';
 export interface RoomsListParams {
   officeId: string;
   minCapacity?: number;
-  /** ISO 8601 с таймзоной; from и to передаются только вместе */
+  // ISO 8601; from и to передаются только вместе
   from?: string;
   to?: string;
 }

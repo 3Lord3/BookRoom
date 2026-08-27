@@ -74,7 +74,7 @@ describe('useCancelBooking', () => {
   });
 
   it('оптимистично удаляет бронирование из кэша до ответа сервера', async () => {
-    // DELETE отвечает с задержкой, чтобы успеть проверить кэш во время запроса
+    // Задержка DELETE, чтобы успеть проверить кэш во время запроса
     server.use(
       http.delete(`${API_BASE_URL}/bookings/:bookingId`, async () => {
         await delay(50);
@@ -90,7 +90,7 @@ describe('useCancelBooking', () => {
       void result.current.confirm();
     });
 
-    // Пока DELETE в полёте, бронирование уже исчезло из списка
+    // Во время DELETE бронь уже исчезла из списка
     expect(selectBookings(store).some((item) => item.id === booking.id)).toBe(false);
 
     await waitFor(() => expect(result.current.target).toBeNull());
@@ -104,7 +104,7 @@ describe('useCancelBooking', () => {
     act(() => result.current.openCancel(booking));
     await act(() => result.current.confirm());
 
-    // Отмена не прошла — бронирование вернулось в кэш
+    // Отмена не прошла, бронь вернулась в кэш
     expect(selectBookings(store).some((item) => item.id === booking.id)).toBe(true);
     expect(result.current.target).toBe(booking);
   });

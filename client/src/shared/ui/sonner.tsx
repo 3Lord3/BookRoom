@@ -4,7 +4,7 @@ import { Check, Info, Loader2, OctagonX, TriangleAlert, X } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Toaster as Sonner, type ToasterProps } from 'sonner';
 
-// Иконка в бейдже тоста: цвет инверсии задаёт CSS по [data-icon] svg
+// Инверсию цвета задаёт CSS по [data-icon] svg
 const badgeIcon = (Icon: typeof Check) => (
   <Icon className="size-20 text-teal-900" strokeWidth={2} />
 );
@@ -15,7 +15,6 @@ const Toaster = ({ ...props }: ToasterProps) => {
   return (
     <Sonner
       theme={theme as ToasterProps['theme']}
-      // Тост отображается карточкой сверху по центру
       position="top-center"
       offset={32}
       closeButton

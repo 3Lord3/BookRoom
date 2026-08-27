@@ -6,7 +6,6 @@ import { cn } from '@shared/lib/cn';
 import { Popover, PopoverContent, PopoverTrigger } from '@shared/ui/popover';
 import { Skeleton } from '@shared/ui/skeleton';
 
-/** Компактный фильтр «Все офисы» в шапке списка бронирований. */
 export function BookingOfficeFilter({ model }: { model: OfficeSelectorModel }) {
   const [open, setOpen] = useState(false);
 

@@ -11,7 +11,7 @@ import { buildInterval } from '@shared/lib/dates';
 
 import { buildOccurrenceSeries } from './recurrence';
 
-/** Значения полей формы бронирования (до расчёта UTC-интервала). */
+// Значения полей формы до расчёта UTC-интервала
 export interface BookingFormValues {
   title: string;
   date: string;
@@ -29,11 +29,8 @@ export interface BookingSchemaContext {
 
 const timePattern = /^([01]\d|2[0-3]):[0-5]\d$/;
 
-/**
- * Схема формы бронирования зеркалит правила бэкенда (server/src/services/booking-rules.ts):
- * будущее, кратно 15 минутам, рабочие часы 09:00–20:00 в таймзоне офиса, не дальше +30 дней.
- * Таймзона и «сейчас» впрыскиваются, чтобы валидацию можно было тестировать детерминированно.
- */
+// Зеркалит правила бэкенда (server/src/services/booking-rules.ts); таймзона и «сейчас»
+// впрыскиваются для детерминированной проверки
 export function createBookingSchema(context: BookingSchemaContext) {
   const { timezone } = context;
   const now = context.now ?? new Date();
@@ -105,8 +102,7 @@ export function createBookingSchema(context: BookingSchemaContext) {
         });
       }
 
-      // Повторы уходят на неделю вперёд каждым вхождением: последнее не должно
-      // вылезать за горизонт +30 дней, иначе серия упадёт частью своих POST
+      // Последнее вхождение серии не должно выходить за горизонт +30 дней
       if (values.repeat === 'weekly' && values.occurrences > 1) {
         const last = buildOccurrenceSeries(interval, values.occurrences).at(-1);
         if (last && new Date(last.from).getTime() - now.getTime() > MAX_ADVANCE_MS) {

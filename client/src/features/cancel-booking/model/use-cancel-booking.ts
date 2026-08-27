@@ -5,7 +5,7 @@ import { useCancelBookingMutation, type BookingView } from '@entities/booking';
 import { getApiErrorMessage } from '@shared/api/types';
 
 export interface CancelBookingModel {
-  /** Бронирование, ожидающее подтверждения отмены; null — диалог закрыт */
+  // Бронирование в диалоге подтверждения; null, диалог закрыт
   target: BookingView | null;
   isPending: boolean;
   openCancel: (booking: BookingView) => void;
@@ -13,7 +13,7 @@ export interface CancelBookingModel {
   confirm: () => void;
 }
 
-/** Отмена собственного бронирования: подтверждение в диалоге, затем DELETE. */
+// Подтверждение в диалоге, затем DELETE
 export function useCancelBooking(): CancelBookingModel {
   const [target, setTarget] = useState<BookingView | null>(null);
   const [cancelBooking, { isLoading }] = useCancelBookingMutation();

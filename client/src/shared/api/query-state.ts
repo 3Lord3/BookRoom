@@ -2,10 +2,7 @@ import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 
 import type { ApiErrorBody } from './types';
 
-/**
- * Единый дискриминированный union для отображения состояний загрузки
- * вместо набора булевых флагов RTK Query.
- */
+// Дискриминированный union вместо булевых флагов загрузки
 export type QueryState<T> =
   { status: 'loading' } | { status: 'error'; message: string } | { status: 'success'; data: T };
 
@@ -15,7 +12,7 @@ interface QueryResultLike<T> {
   isLoading: boolean;
 }
 
-/** Ошибка сервера приходит в едином конверте { error: { code, message } }. */
+// Ошибка API приходит в конверте { error: { code, message } }
 function extractMessage(error: unknown): string {
   if (error && typeof error === 'object' && 'data' in error) {
     const body = (error as FetchBaseQueryError).data;

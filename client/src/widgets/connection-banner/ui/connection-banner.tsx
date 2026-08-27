@@ -2,7 +2,7 @@ import { TriangleAlert } from 'lucide-react';
 
 import { useConnectionBanner } from '../model/use-connection-banner';
 
-// Баннер из макета rooms-error-state: жёлтая плашка над шапкой, пока идёт переподключение
+// Жёлтая плашка над шапкой, пока идёт переподключение
 export function ConnectionBanner() {
   const { visible } = useConnectionBanner();
 

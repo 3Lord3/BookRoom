@@ -18,7 +18,6 @@ function minutesLabel(iso: string, timezone: string): string {
   return `${pad(hours)}:${pad(minutes)}`;
 }
 
-/** Аббревиатура таймзоны офиса: «MSK» */
 function timezoneAbbr(iso: string, timezone: string): string {
   const parts = new Intl.DateTimeFormat('en-US', {
     timeZone: timezone,
@@ -27,18 +26,17 @@ function timezoneAbbr(iso: string, timezone: string): string {
   return parts.find((part) => part.type === 'timeZoneName')?.value ?? '';
 }
 
-/** Месяц в именительном падеже для даты-бейджа карточки: «Октябрь» */
+// Месяц в именительном падеже: «Октябрь»
 export function bookingMonth(iso: string, timezone: string): string {
   const zoned = new TZDate(new Date(iso).getTime(), timezone);
   return capitalize(format(zoned, 'LLLL', { locale: ru }));
 }
 
-/** День месяца в таймзоне офиса: «24» */
+// День месяца в таймзоне офиса
 export function bookingDay(iso: string, timezone: string): number {
   return new TZDate(new Date(iso).getTime(), timezone).getDate();
 }
 
-/** «15:00 - 16:00 MSK» — время встречи с аббревиатурой таймзоны офиса */
 export function formatBookingTimeRange(
   booking: Pick<BookingView, 'startsAt' | 'endsAt'>,
   timezone: string,
@@ -49,7 +47,6 @@ export function formatBookingTimeRange(
   )} ${timezoneAbbr(booking.startsAt, timezone)}`;
 }
 
-/** «Четверг, 24 октября, 15:00 - 16:00» — полная дата встречи в таймзоне офиса */
 export function formatBookingFull(
   booking: Pick<BookingView, 'startsAt' | 'endsAt'>,
   timezone: string,
@@ -62,7 +59,6 @@ export function formatBookingFull(
   )}`;
 }
 
-/** «Комната 'Эверест', 4 этаж» — сводка места в диалоге отмены */
 export function formatBookingRoom(room: Pick<BookingView['room'], 'name' | 'floor'>): string {
   return `Комната '${room.name}', ${room.floor} этаж`;
 }

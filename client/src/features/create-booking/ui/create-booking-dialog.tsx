@@ -37,7 +37,7 @@ import type { CreateBookingModel } from '../model/use-create-booking';
 
 const capitalize = (value: string) => value.replace(/\p{L}/u, (letter) => letter.toUpperCase());
 
-/** Время начала из рабочих часов, шаг 15 минут: 09:00–19:45 */
+// Время начала шагом 15 минут из рабочих часов
 const START_TIME_OPTIONS = Array.from(
   { length: (WORK_DAY_END_MINUTES - WORK_DAY_START_MINUTES) / TIME_STEP_MINUTES },
   (_, index) => {
@@ -47,14 +47,13 @@ const START_TIME_OPTIONS = Array.from(
   },
 );
 
-// Любая длительность из выбранного на расписании диапазона должна отображаться в поле,
-// поэтому опции покрывают весь рабочий день шагом 15 минут, а не фиксированный список
+// Опции покрывают весь рабочий день: любая длительность из диапазона должна быть в поле
 const DURATION_OPTIONS = Array.from(
   { length: (WORK_DAY_END_MINUTES - WORK_DAY_START_MINUTES) / TIME_STEP_MINUTES },
   (_, index) => (index + 1) * TIME_STEP_MINUTES,
 );
 
-// Еженедельные повторы упираются в горизонт +30 дней, поэтому вхождений не больше 8
+// Горизонт +30 дней ограничивает повторы 8 вхождениями
 const OCCURRENCE_OPTIONS = [2, 3, 4, 5, 6, 7, 8];
 
 function pluralRu(count: number, one: string, few: string, many: string): string {
@@ -81,7 +80,7 @@ function formatDuration(minutes: number): string {
   return `${hours} ч ${rest} мин`;
 }
 
-/** Конец бронирования для подписи длительности: «1 час (до 16:00)» */
+// Конец для подписи длительности
 function endTimeLabel(startTime: string, duration: number): string {
   const [hours = 0, minutes = 0] = startTime.split(':').map(Number);
   const endMinutes = hours * 60 + minutes + duration;
@@ -91,9 +90,7 @@ function endTimeLabel(startTime: string, duration: number): string {
 
 interface CreateBookingDialogProps {
   model: CreateBookingModel;
-  /** Подпись шапки модалки: комната и офис */
   subtitle: string;
-  /** Таймзона офиса — для границ календаря и подписей */
   timezone: string;
 }
 

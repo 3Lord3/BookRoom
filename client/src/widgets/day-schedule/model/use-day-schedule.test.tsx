@@ -9,7 +9,7 @@ import { createStore } from '../../../app/providers/store';
 const ROOM_ID = 'room-everest';
 const TIMEZONE = 'Europe/Moscow';
 
-/** Дата ближайшего понедельника — синхронно с фикстурами бронирований */
+// Дата ближайшего понедельника, синхронно с фикстурами
 function nextMonday(): string {
   const date = new Date();
   const daysUntilMonday = (8 - date.getUTCDay()) % 7 || 7;
@@ -34,7 +34,7 @@ function renderSchedule(entry: string) {
   });
 }
 
-/** Свежий success-контент: перечитываем result после каждого действия, т.к. он снапшот рендера */
+// result снапшот рендера, перечитываем его после каждого действия
 function content(view: ReturnType<typeof renderSchedule>) {
   const current = view.result.current.content;
   if (current.status !== 'success') {
@@ -64,11 +64,11 @@ describe('useDaySchedule: выбор интервала', () => {
     act(() => content(view).onDragOver(22));
     expect(content(view).selection).toEqual({ startIndex: 20, endIndex: 22 });
 
-    // Клик после drag начинает новый интервал с одной ячейки (не расширяет прежний)…
+    // Клик после drag начинает новый интервал с одной ячейки
     act(() => content(view).onPress(24));
     expect(content(view).selection).toEqual({ startIndex: 24, endIndex: 24 });
 
-    // …но origin уже снова click, поэтому следующий клик расширяет диапазон
+    // origin уже click, следующий клик снова расширяет
     act(() => content(view).onPress(26));
     expect(content(view).selection).toEqual({ startIndex: 24, endIndex: 26 });
   });
@@ -80,7 +80,7 @@ describe('useDaySchedule: выбор интервала', () => {
     act(() => content(view).onPress(20));
     expect(content(view).selection).not.toBeNull();
 
-    // 18:00–18:15 (индекс 36) занят чужим бронированием из фикстур
+    // 18:00–18:15 (индекс 36) занят чужим бронированием
     act(() => content(view).onPress(36));
     expect(content(view).selection).toBeNull();
   });

@@ -6,10 +6,7 @@ import {
   WORK_DAY_START_MINUTES,
 } from '@shared/config/schedule';
 
-/**
- * Время начала по умолчанию: ближайший будущий слот шагом 15 минут,
- * зажатый в рабочие часы офиса (09:00–19:45).
- */
+// Ближайший будущий слот шагом 15 минут в рабочих часах офиса
 export function defaultStartTimeInTimezone(timezone: string, now = new Date()): string {
   const localNow = new TZDate(now.getTime(), timezone);
   const nowMinutes = localNow.getHours() * 60 + localNow.getMinutes();

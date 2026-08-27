@@ -9,7 +9,7 @@ interface NavbarLink {
 interface NavbarModel {
   links: readonly NavbarLink[];
   viewer: QueryState<User>;
-  /** Имя в шапке в краткой форме макета: «Константин К.» */
+  // Краткая форма имени: «Константин К.»
   shortDisplayName: string | null;
 }
 

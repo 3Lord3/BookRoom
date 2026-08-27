@@ -1,7 +1,7 @@
 import { parseWsEvent } from './parse';
 import type { WsEvent } from './types';
 
-// Типы событий сокета: message — данные для разбора, остальные — факт перехода состояния
+// message несёт данные для разбора, остальные только факт смены состояния
 export interface WsSocketEventMap {
   message: { data: unknown };
   open: void;
@@ -9,7 +9,7 @@ export interface WsSocketEventMap {
   error: void;
 }
 
-// Минимальная поверхность WebSocket-соединения, которой пользуется клиент (подмена для тестов)
+// Минимальная поверхность WebSocket, подменяемая в тестах
 export interface WsSocketLike {
   addEventListener<K extends keyof WsSocketEventMap>(
     type: K,
@@ -20,7 +20,7 @@ export interface WsSocketLike {
 
 export type WsEventHandler = (event: WsEvent) => void;
 
-// Состояния соединения: reconnecting — обрыв не по нашей воле, идёт переподключение
+// reconnecting: обрыв не по нашей воле, идёт переподключение
 export type WsConnectionStatus = 'connecting' | 'connected' | 'reconnecting' | 'disconnected';
 
 export type WsStatusHandler = (status: WsConnectionStatus) => void;
@@ -28,24 +28,23 @@ export type WsStatusHandler = (status: WsConnectionStatus) => void;
 export interface WsClient {
   connect(): void;
   close(): void;
-  // Подписка на события; возвращает функцию отписки
+  // Возвращает функцию отписки
   subscribe(handler: WsEventHandler): () => void;
-  // Подписка на смену статуса; сразу сообщает текущий статус
+  // Сразу сообщает текущий статус
   subscribeStatus(handler: WsStatusHandler): () => void;
 }
 
 export interface CreateWsClientOptions {
   url: string;
-  // Подменяемый конструктор WebSocket для тестов
+  // Подменяемый конструктор для тестов
   WebSocketImpl?: new (url: string) => WsSocketLike;
-  // Шаг экспоненциальной задержки переподключения и её потолок
+  // Задержка переподключения и её потолок
   reconnectDelayMs?: number;
   maxReconnectDelayMs?: number;
 }
 
-// Тонкий клиент broadcast-канала: соединение, разбор сообщений и рассылка подписчикам.
-// Обрыв не по нашей воле приводит к экспоненциальному переподключению (без истории
-// сообщений в канале единственная стратегия — повторный запрос REST-данных, см. middleware)
+// Обрыв не по нашей воле ведёт к экспоненциальному переподключению; без истории
+// в канале единственная стратегия: повторный запрос REST-данных (см. middleware)
 export function createWsClient(options: CreateWsClientOptions): WsClient {
   const Impl = options.WebSocketImpl ?? WebSocket;
   const baseDelay = options.reconnectDelayMs ?? 1000;
@@ -96,11 +95,10 @@ export function createWsClient(options: CreateWsClientOptions): WsClient {
       return;
     }
     const next = new Impl(options.url);
-    // Повторное открытие после обрыва тоже «переподключение»: зависшая в CONNECTING
-    // попытка не должна гасить индикатор, пока канал ещё недоступен
+    // Повторное открытие после обрыва не гасит индикатор, пока канал недоступен
     setStatus(everConnected ? 'reconnecting' : 'connecting');
     next.addEventListener('message', (event) => {
-      // События старого сокета (между error и close) не доставляются подписчикам
+      // События старого сокета подписчикам не доставляются
       if (socket !== next) {
         return;
       }
@@ -116,8 +114,7 @@ export function createWsClient(options: CreateWsClientOptions): WsClient {
       attempt = 0;
       setStatus('connected');
     });
-    // События старого сокета не трогают соединение, если за это время уже открыто
-    // новое: сравнение по ссылке защищает от гонки close/error после reconnect
+    // Сравнение по ссылке защищает от гонки close/error после reconnect
     next.addEventListener('close', () => {
       if (socket === next) {
         socket = null;

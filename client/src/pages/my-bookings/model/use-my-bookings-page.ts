@@ -20,17 +20,13 @@ export interface MyBookingsPageModel {
   officeSelector: ReturnType<typeof useOfficeSelector>;
   tab: MyBookingsTab;
   setTab: (tab: MyBookingsTab) => void;
-  /** Для подписи таба «Предстоящие (N)» */
+  // Для подписи таба «Предстоящие (N)»
   upcomingCount: number;
   content: MyBookingsContent;
   cancel: CancelBookingModel;
 }
 
-/**
- * «Мои бронирования». Оба таба обслуживаются одним запросом scope=all —
- * так подпись «Предстоящие (N)» не требует второго запроса, а переключение
- * таба происходит без refetch.
- */
+// Оба таба обслуживает один запрос scope=all: подпись и переключение без refetch
 export function useMyBookingsPage(): MyBookingsPageModel {
   const [searchParams, setSearchParams] = useSearchParams();
   const officeSelector = useOfficeSelector();

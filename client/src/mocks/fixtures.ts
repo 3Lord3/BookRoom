@@ -1,9 +1,6 @@
 import type { BookingScope, BookingView, Office, RoomSummary, User } from '@shared/api/dto';
 
-/**
- * Фикстуры повторяют seed предоставленного бэкенда,
- * чтобы тесты и dev-данные не расходились.
- */
+// Фикстуры повторяют seed бэкенда, чтобы тесты и dev-данные не расходились
 
 export const viewer: User = {
   id: 'user-konstantin',
@@ -74,7 +71,7 @@ export const rooms: RoomSummary[] = [
 
 const HOUR_MS = 60 * 60 * 1000;
 
-/** Ближайший будущий понедельник, hourUtc:00 UTC — стабильно «в будущем» */
+// Ближайший понедельник, hourUtc:00 UTC, стабильно в будущем
 function futureIso(hourUtc: number): string {
   const date = new Date();
   const daysUntilMonday = (8 - date.getUTCDay()) % 7 || 7;
@@ -130,7 +127,7 @@ export const myBookings: Record<BookingScope, BookingView[]> = {
 myBookings.upcoming = [myBookings.all[0]!];
 myBookings.past = [myBookings.all[1]!];
 
-/** Чужое бронирование — для блока «Занято» в расписании комнаты */
+// Чужое бронирование для блока «Занято» в расписании
 const colleague: User = {
   id: 'user-mariya',
   login: 'morlova',
@@ -140,7 +137,7 @@ const colleague: User = {
   initials: 'МО',
 };
 
-// Тот же будущий понедельник, 15:00Z — 18:00–19:00 по Москве
+// Тот же понедельник: 15:00Z, 18:00–19:00 по Москве
 const colleagueStart = futureIso(15);
 
 export const roomSchedule: BookingView[] = [

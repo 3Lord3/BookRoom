@@ -43,7 +43,6 @@ describe('useRoomFilters', () => {
     expect(result.current.time).toBe('10:15');
     expect(result.current.duration).toBe(30);
     expect(result.current.capacity).toBe(4);
-    // Летом Москва = UTC+3
     expect(result.current.request.minCapacity).toBe(4);
     expect(result.current.request.from).toBe('2026-09-01T07:15:00.000Z');
     expect(result.current.request.to).toBe('2026-09-01T07:45:00.000Z');

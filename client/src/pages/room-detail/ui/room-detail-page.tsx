@@ -10,7 +10,7 @@ import { RoomInfoCard } from './room-info-card';
 import { useRoomDetailPage } from '../model/use-room-detail-page';
 
 const BAR = 'bg-gray-100';
-// Вторичный оттенок плейсхолдеров (иконки фич, кнопка выбора дня) из макета
+// Вторичный оттенок плейсхолдеров из макета
 const BAR_ALT = 'bg-blue-100-2';
 
 function BreadcrumbsSkeleton() {
@@ -83,7 +83,6 @@ export function RoomDetailPage() {
     <main className="mx-auto flex min-h-[calc(100dvh-72px)] w-full max-w-[1440px] grow flex-col">
       <RoomBreadcrumbs room={content.room} />
       <div className="flex grow gap-32 px-40 pb-48">
-        {/* Левая колонка фиксированной ширины из макета */}
         <div className="flex w-[420px] shrink-0 flex-col gap-24">
           <RoomInfoCard room={content.room} />
         </div>

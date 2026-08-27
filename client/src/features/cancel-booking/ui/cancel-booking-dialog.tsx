@@ -12,7 +12,6 @@ import {
 
 import type { CancelBookingModel } from '../model/use-cancel-booking';
 
-/** Подтверждение отмены из макета: заголовок, сводка места и времени, две кнопки. */
 export function CancelBookingDialog({ model }: { model: CancelBookingModel }) {
   const { target } = model;
 

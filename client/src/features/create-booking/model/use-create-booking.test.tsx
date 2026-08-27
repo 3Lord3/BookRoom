@@ -38,7 +38,7 @@ describe('useCreateBooking', () => {
   });
 
   it('по интервалу из URL открывается и выводит значения полей в таймзоне офиса', () => {
-    // 11:00Z — 14:00 по Москве летом, длительность 1 час
+    // 11:00Z = 14:00 по Москве летом
     const { result } = renderHook(
       () => useCreateBooking('room-everest', 'Europe/Moscow', 'Эверест'),
       {
@@ -109,7 +109,7 @@ describe('useCreateBooking', () => {
       });
     });
 
-    // Пока серия в полёте — прогресс виден, кнопка показывает отправленные вхождения
+    // Пока серия в полёте, виден прогресс
     expect(result.current.progress).toEqual({ done: 0, total: 3 });
     await waitFor(() => expect(result.current.progress).toBeNull());
 
