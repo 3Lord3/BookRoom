@@ -9,7 +9,7 @@ import {
   WORK_DAY_START_MINUTES,
 } from '@shared/config/schedule';
 import { cn } from '@shared/lib/cn';
-import { todayInTimezone } from '@shared/lib/dates';
+import { formatDateWithShortWeekday, todayInTimezone } from '@shared/lib/dates';
 import { Button } from '@shared/ui/button';
 import { Calendar } from '@shared/ui/calendar';
 import {
@@ -20,7 +20,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@shared/ui/dialog';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@shared/ui/form';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  useFormField,
+} from '@shared/ui/form';
 import { Input } from '@shared/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@shared/ui/popover';
 import {
@@ -34,8 +42,6 @@ import {
 import { Textarea } from '@shared/ui/textarea';
 
 import type { CreateBookingModel } from '../model/use-create-booking';
-
-const capitalize = (value: string) => value.replace(/\p{L}/u, (letter) => letter.toUpperCase());
 
 // Время начала шагом 15 минут из рабочих часов
 const START_TIME_OPTIONS = Array.from(
@@ -339,6 +345,7 @@ function DateField({
   };
   timezone: string;
 }) {
+  const { error } = useFormField();
   const selected = field.value ? parseISO(field.value) : undefined;
   const minDate = todayInTimezone(timezone);
   const maxDate = format(addDays(parseISO(minDate), MAX_AHEAD_DAYS), 'yyyy-MM-dd');
@@ -349,12 +356,19 @@ function DateField({
         <FormControl>
           <button
             type="button"
-            className="flex h-auto w-full items-center gap-8 rounded-8 border border-input px-14 py-10 text-xl"
+            aria-invalid={!!error}
+            className={cn(
+              'flex h-auto w-full items-center gap-8 rounded-8 border border-input px-14 py-10 text-xl md:text-xl',
+              error && 'border-red-400',
+            )}
           >
-            <CalendarIcon className="size-16 shrink-0 text-blue-700" strokeWidth={2} />
+            <CalendarIcon
+              className={cn('size-16 shrink-0', error ? 'text-red-400' : 'text-blue-700')}
+              strokeWidth={2.5}
+            />
             <span className={cn(!field.value && 'text-blue-400')}>
               {field.value
-                ? capitalize(format(selected as Date, 'd MMMM, EEEE', { locale: ru }))
+                ? formatDateWithShortWeekday(selected as Date)
                 : 'Выберите дату'}
             </span>
           </button>
