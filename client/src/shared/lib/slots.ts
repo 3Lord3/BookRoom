@@ -7,7 +7,7 @@ import {
 import { buildInterval, type Interval } from './dates';
 
 export interface DaySlot {
-  /** Границы слота в «минутах суток» таймзоны офиса */
+  // Границы слота в минутах суток офиса
   start: number;
   end: number;
   busy: boolean;
@@ -25,7 +25,7 @@ export interface MinuteInterval {
 
 const DAY_SLOT_COUNT = (WORK_DAY_END_MINUTES - WORK_DAY_START_MINUTES) / TIME_STEP_MINUTES;
 
-/** Сетка рабочего дня 09:00–20:00 шагом 15 минут, изначально вся свободная */
+// Сетка рабочего дня шагом 15 минут, изначально свободная
 export function buildDaySlots(): DaySlot[] {
   return Array.from({ length: DAY_SLOT_COUNT }, (_, index) => ({
     start: WORK_DAY_START_MINUTES + index * TIME_STEP_MINUTES,
@@ -37,7 +37,7 @@ export function buildDaySlots(): DaySlot[] {
 const overlaps = (left: MinuteInterval, right: MinuteInterval): boolean =>
   left.start < right.end && right.start < left.end;
 
-/** Помечает занятыми слоты, пересекающиеся хотя бы с одним интервалом бронирований */
+// Занятые слоты по пересечению с интервалами бронирований
 export function markBusySlots(slots: DaySlot[], intervals: MinuteInterval[]): DaySlot[] {
   return slots.map((slot) => ({
     ...slot,
@@ -49,10 +49,8 @@ export function isRangeFree(slots: DaySlot[], range: SlotRange): boolean {
   return slots.slice(range.startIndex, range.endIndex + 1).every((slot) => !slot.busy);
 }
 
-/**
- * Максимальный непрерывный свободный диапазон от anchor к target включительно:
- * рост останавливается на первом занятом слоте. null — сам anchor занят.
- */
+// Свободный диапазон от anchor к target; рост останавливает занятый слот.
+// null, если занят сам anchor
 export function clampFreeRange(slots: DaySlot[], anchor: number, target: number): SlotRange | null {
   const anchorSlot = slots[anchor];
   if (!anchorSlot || anchorSlot.busy) {
@@ -72,7 +70,7 @@ export function clampFreeRange(slots: DaySlot[], anchor: number, target: number)
   return { startIndex: Math.min(anchor, cursor), endIndex: Math.max(anchor, cursor) };
 }
 
-/** Выбранный диапазон слотов → UTC-интервал для запросов к API */
+// Диапазон слотов в UTC-интервал для запросов
 export function slotRangeToInterval(date: string, range: SlotRange, timezone: string): Interval {
   const startMinutes = WORK_DAY_START_MINUTES + range.startIndex * TIME_STEP_MINUTES;
   const durationMinutes = (range.endIndex - range.startIndex + 1) * TIME_STEP_MINUTES;

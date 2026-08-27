@@ -12,9 +12,9 @@ function formatLabel(timezone: string, date: Date): string {
   return `${get('hour')}:${get('minute')} ${get('timeZoneName')}`;
 }
 
-/** Подпись текущего времени в таймзоне офиса: «14:35 МСК» */
+// «14:35 МСК» в таймзоне офиса
 export function useLocalTime(timezone: string | null): string | null {
-  // В стейте только тик раз в минуту — подпись выводится из него на каждом рендере
+  // В стейте только тик раз в минуту, подпись выводится на каждом рендере
   const [now, setNow] = useState<Date | null>(null);
 
   useEffect(() => {

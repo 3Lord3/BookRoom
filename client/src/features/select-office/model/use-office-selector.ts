@@ -9,17 +9,13 @@ export interface OfficeSelectorModel {
   offices: QueryState<Office[]>;
   selectedId: string | null;
   selected: Office | null;
-  /** «14:35 МСК» для выбранного офиса либо null */
+  // «14:35 МСК» выбранного офиса либо null
   localTime: string | null;
   select: (officeId: string) => void;
-  /** Сброс фильтра к «Все офисы» */
   clear: () => void;
 }
 
-/**
- * Выбранный офис живёт в searchParams (?office=), поэтому ссылка
- * на отфильтрованный список можно расшарить, а выбор переживает перезагрузку.
- */
+// Офис живёт в searchParams (?office=): ссылку можно расшарить, выбор переживает перезагрузку
 export function useOfficeSelector(): OfficeSelectorModel {
   const [searchParams, setSearchParams] = useSearchParams();
   const officesResult = useGetOfficesQuery();

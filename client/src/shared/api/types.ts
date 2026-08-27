@@ -6,14 +6,14 @@ export interface ApiErrorBody {
   };
 }
 
-/** Коды ошибок, которые фронтенд обрабатывает программно. */
+// Коды ошибок, которые фронтенд обрабатывает программно
 export const API_ERROR_CODES = {
   bookingConflict: 'BOOKING_CONFLICT',
 } as const;
 
 export type ApiErrorCode = (typeof API_ERROR_CODES)[keyof typeof API_ERROR_CODES];
 
-/** Достаёт machine-readable код ошибки из FetchBaseQueryError, если это ошибка API. */
+// Код ошибки из FetchBaseQueryError; null, если это не ошибка API
 export function getApiErrorCode(error: unknown): string | null {
   if (error && typeof error === 'object' && 'data' in error) {
     const body = (error as { data: unknown }).data;
@@ -25,7 +25,7 @@ export function getApiErrorCode(error: unknown): string | null {
   return null;
 }
 
-/** Достаёт человекочитаемое сообщение из FetchBaseQueryError, если это ошибка API. */
+// Сообщение из FetchBaseQueryError; null, если это не ошибка API
 export function getApiErrorMessage(error: unknown): string | null {
   if (error && typeof error === 'object' && 'data' in error) {
     const body = (error as { data: unknown }).data;

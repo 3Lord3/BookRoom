@@ -43,7 +43,7 @@ function durationLabel(from: string, to: string): string {
 
 const capitalize = (value: string) => value.replace(/\p{L}/u, (letter) => letter.toUpperCase());
 
-/** «понедельник, 31 августа» → «Понедельник, 31 Августа» — как в макете */
+// «понедельник, 31 августа» → «Понедельник, 31 Августа»
 function weekdayGenitive(iso: string, timezone: string): string {
   const zoned = new TZDate(new Date(iso).getTime(), timezone);
   const label = format(zoned, 'EEEE, d MMMM', { locale: ru });
@@ -51,7 +51,6 @@ function weekdayGenitive(iso: string, timezone: string): string {
   return `${capitalize(weekday)}, ${capitalize(rest)}`;
 }
 
-/** Сводка под формой: «Бронирование на Четверг, 24 Октября, 15:00 - 16:00 (1 час)» */
 export function formatSummary(interval: Interval, timezone: string): string {
   const start = minutesLabel(interval.from, timezone);
   const end = minutesLabel(interval.to, timezone);
@@ -60,13 +59,11 @@ export function formatSummary(interval: Interval, timezone: string): string {
   return `Бронирование на ${day}, ${start} - ${end} (${duration})`;
 }
 
-/** Дата для тоста успеха: «24 октября» в таймзоне офиса */
 export function formatShortDate(iso: string, timezone: string): string {
   const zoned = new TZDate(new Date(iso).getTime(), timezone);
   return format(zoned, 'd MMMM', { locale: ru });
 }
 
-/** Аббревиатура таймзоны офиса: «MSK» */
 function timezoneAbbr(iso: string, timezone: string): string {
   const parts = new Intl.DateTimeFormat('en-US', {
     timeZone: timezone,
@@ -75,7 +72,6 @@ function timezoneAbbr(iso: string, timezone: string): string {
   return parts.find((part) => part.type === 'timeZoneName')?.value ?? '';
 }
 
-/** Описание тоста успеха: «Комната Эверест, 24 октября, 15:00–16:00 MSK» */
 export function formatToastDescription(
   roomName: string,
   interval: Interval,
@@ -87,17 +83,14 @@ export function formatToastDescription(
   return `Комната ${roomName}, ${day}, ${start}–${end} ${timezoneAbbr(interval.from, timezone)}`;
 }
 
-/** «2 встречи» / «5 встреч» — количество вхождений серии повторов */
 export function formatOccurrences(count: number): string {
   return `${count} ${pluralRu(count, 'встреча', 'встречи', 'встреч')}`;
 }
 
-/** Подпись повтора для сводки: «4 встречи еженедельно» */
 export function formatRecurrence(count: number): string {
   return `${formatOccurrences(count)} еженедельно`;
 }
 
-/** Описание тоста серии: «4 встречи · Комната Эверест, 24 августа, 10:00–11:00 MSK» */
 export function formatSeriesToastDescription(
   roomName: string,
   series: Interval[],

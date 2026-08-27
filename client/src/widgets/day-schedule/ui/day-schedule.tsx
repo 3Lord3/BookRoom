@@ -21,7 +21,7 @@ import {
   type ScheduleEventModel,
 } from '../model/use-day-schedule';
 
-/** Высота часовой строки из макета */
+// Высота часовой строки из макета
 const HOUR_ROW_HEIGHT_PX = 48;
 const PX_PER_MINUTE = HOUR_ROW_HEIGHT_PX / 60;
 
@@ -73,7 +73,6 @@ export function DaySchedule({ roomId, timezone }: DayScheduleProps) {
 
             <Popover>
               <PopoverTrigger asChild>
-                {/* Кнопка выбора дня из макета: календарь + подпись */}
                 <button
                   type="button"
                   className="flex items-center gap-8 rounded-8 border border-border px-16 py-10 text-xl font-semibold"
@@ -100,7 +99,7 @@ export function DaySchedule({ roomId, timezone }: DayScheduleProps) {
           <Timeline content={model.content} />
 
           <footer className="flex items-center justify-end py-12">
-            {/* Кнопка доступна всегда: без выбора открывает пустую форму бронирования */}
+            {/* Без выбора открывает пустую форму бронирования */}
             <Button
               onClick={model.content.book}
               className="h-auto rounded-8 px-24 py-10 text-xl font-semibold"
@@ -125,7 +124,7 @@ function HourRow({ label }: { label: string }) {
 
 function Timeline({ content }: { content: Extract<DayScheduleContent, { status: 'success' }> }) {
   const selection = content.selection;
-  // Перетаскивание — только флаг захвата указателя; диапазон расширяет модель (onPress)
+  // Только флаг захвата; диапазон расширяет модель через onPress
   const draggingRef = useRef(false);
 
   const endDrag = () => {
@@ -133,8 +132,7 @@ function Timeline({ content }: { content: Extract<DayScheduleContent, { status: 
   };
 
   return (
-    // pointerup на контейнере, а не только на слотах: отпускание над колонкой
-    // часов иначе оставило бы флаг перетаскивания зажатым
+    // Отпускание над колонкой часов тоже должно завершать перетаскивание
     <div
       className="relative flex flex-col select-none"
       onPointerLeave={endDrag}
@@ -149,7 +147,7 @@ function Timeline({ content }: { content: Extract<DayScheduleContent, { status: 
           <EventBlock key={event.key} event={event} />
         ))}
 
-        {/* Выбранный интервал рисуется единым блоком, а не подсветкой каждой ячейки */}
+        {/* Интервал рисуем единым блоком, а не подсветкой ячеек */}
         {selection && <SelectionBlock slots={content.slots} selection={selection} />}
 
         {content.slots.map(
@@ -181,7 +179,7 @@ function Timeline({ content }: { content: Extract<DayScheduleContent, { status: 
                   top: `${(slot.start - WORK_DAY_START_MINUTES) * PX_PER_MINUTE}px`,
                   height: `${TIME_STEP_MINUTES * PX_PER_MINUTE}px`,
                 }}
-                // Слоты внутри выбора прозрачны — подсветку даёт блок SelectionBlock
+                // Внутри выбора слоты прозрачны, подсветку даёт SelectionBlock
                 className="absolute inset-x-0 cursor-pointer rounded-8 transition-colors hover:bg-teal-200/40"
               />
             ),
@@ -191,7 +189,7 @@ function Timeline({ content }: { content: Extract<DayScheduleContent, { status: 
   );
 }
 
-/** Непрерывный блок выбранного диапазона: от начала первого слота до конца последнего */
+// Непрерывный блок выбранного диапазона
 function SelectionBlock({ slots, selection }: { slots: DaySlot[]; selection: SlotRange }) {
   const startSlot = slots[selection.startIndex];
   const endSlot = slots[selection.endIndex];
@@ -210,7 +208,7 @@ function SelectionBlock({ slots, selection }: { slots: DaySlot[]; selection: Slo
   );
 }
 
-/** Блок бронирования поверх сетки: своё — с названием, чужое — «Занято» */
+// Своё бронирование с названием, чужое просто «Занято»
 function EventBlock({ event }: { event: ScheduleEventModel }) {
   return (
     <div

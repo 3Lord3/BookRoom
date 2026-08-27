@@ -27,8 +27,7 @@ function invalidateAll(dispatch: SyncDispatch) {
   );
 }
 
-// Real-time-синхронизация. WS не хранит данные (единственный источник — RTK Query):
-// каждое событие лишь инвалидирует теги, и активные запросы перезапрашиваются сами
+// WS не хранит данные: события лишь инвалидируют теги, активные запросы перезапрашиваются сами
 export function createRealTimeSyncMiddleware(wsClient: WsClient) {
   const listener = createListenerMiddleware();
   let unsubscribe: (() => void) | null = null;
@@ -39,8 +38,7 @@ export function createRealTimeSyncMiddleware(wsClient: WsClient) {
       if (unsubscribe) {
         return;
       }
-      // После reconnect (не первый connect) broadcast-канал ничего не помнит —
-      // перезапрашиваем весь активный кэш, иначе события, пропущенные за обрыв, потеряются
+      // Канал после обрыва ничего не помнит, перезапрашиваем весь активный кэш
       let wasConnected = false;
       const detachStatus = wsClient.subscribeStatus((status) => {
         listenerApi.dispatch(connectionStatusChanged(status));
@@ -63,8 +61,7 @@ export function createRealTimeSyncMiddleware(wsClient: WsClient) {
   listener.startListening({
     actionCreator: realTimeStopped,
     effect: () => {
-      // Сначала закрываем, пока статус-подписка жива: финальный disconnected должен
-      // попасть в стор, иначе после остановки в нём застрянет reconnecting
+      // Закрываем до отписки, чтобы финальный disconnected попал в стор
       wsClient.close();
       unsubscribe?.();
       unsubscribe = null;
@@ -78,8 +75,7 @@ function handleWsEvent(event: WsEvent, dispatch: SyncDispatch) {
   switch (event.type) {
     case 'booking.created':
     case 'booking.cancelled':
-      // Создание/отмена меняют не только расписание и «мои бронирования», но и доступность
-      // комнат в списке — перезапрашиваем его целиком, чтобы бейджи available не устарели
+      // Меняется и доступность комнат, перезапрашиваем список целиком
       dispatch(
         baseApi.util.invalidateTags([
           { type: 'MyBookings' },
@@ -89,7 +85,7 @@ function handleWsEvent(event: WsEvent, dispatch: SyncDispatch) {
       );
       break;
     case 'room.availability_changed':
-      // Доступность комнат на выбранном интервале — признак из отфильтрованного списка
+      // Доступность живёт в отфильтрованном списке комнат
       dispatch(baseApi.util.invalidateTags([{ type: 'Room' }]));
       break;
     case 'data.reset':

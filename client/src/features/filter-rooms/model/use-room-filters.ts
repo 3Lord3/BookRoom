@@ -9,7 +9,7 @@ const TIME_KEY = 'time';
 const DURATION_KEY = 'duration';
 const CAPACITY_KEY = 'capacity';
 
-/** Длительность по умолчанию — «1 час» из макета */
+// «1 час» из макета
 const DEFAULT_DURATION_MINUTES = 60;
 
 export interface RoomFiltersRequest {
@@ -28,14 +28,11 @@ export interface RoomFiltersModel {
   setDuration: (minutes: number) => void;
   setCapacity: (capacity: number | null) => void;
   reset: () => void;
-  /** Параметры GET /rooms, выведенные из фильтров */
+  // Параметры GET /rooms из фильтров
   request: RoomFiltersRequest;
 }
 
-/**
- * Фильтры списка комнат живут в searchParams (синхронизация с URL).
- * Пока офис не выбран — интервал не строится и список не запрашивается.
- */
+// Пока офис не выбран, интервал не строится и список не запрашивается
 export function useRoomFilters(timezone: string | null): RoomFiltersModel {
   const [searchParams, setSearchParams] = useSearchParams();
 

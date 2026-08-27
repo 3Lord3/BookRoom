@@ -13,7 +13,7 @@ const TONE_CLASSES: Record<Tone, { circle: string; icon: string }> = {
 
 interface StateBlockProps {
   tone: Tone;
-  /** Круглая иллюстрация из макета — крупная иконка lucide */
+  // Крупная иконка lucide в круглой рамке из макета
   icon: ReactNode;
   title: string;
   subtitle: string;

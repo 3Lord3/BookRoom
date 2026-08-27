@@ -4,7 +4,7 @@ import { bookingLocalMinutes } from './local-minutes';
 
 describe('bookingLocalMinutes', () => {
   it('переводит UTC-границы в минуты суток таймзоны офиса', () => {
-    // Летом Москва = UTC+3: встреча в 09:00Z начинается в 12:00 по Москве
+    // Летом Москва = UTC+3, 09:00Z = 12:00 местных
     expect(
       bookingLocalMinutes(
         { startsAt: '2026-08-24T09:00:00.000Z', endsAt: '2026-08-24T10:00:00.000Z' },

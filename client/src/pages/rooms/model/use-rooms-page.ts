@@ -14,7 +14,7 @@ export type RoomsContent =
 export interface RoomsPageModel {
   officeSelector: ReturnType<typeof useOfficeSelector>;
   filters: ReturnType<typeof useRoomFilters>;
-  /** Таймзона выбранного офиса — нужна фильтрам для интервала */
+  // Таймзона выбранного офиса для фильтров
   timezone: string | null;
   content: RoomsContent;
 }
@@ -24,8 +24,7 @@ export function useRoomsPage(): RoomsPageModel {
   const timezone = officeSelector.selected?.timezone ?? null;
   const filters = useRoomFilters(timezone);
 
-  // Ждём не только id из URL, но и сам объект офиса: без его таймзоны
-  // интервал не построить, а запрос без интервала сразу устаревает
+  // Без объекта офиса интервал не построить, а запрос без него сразу устаревает
   const roomsResult = useGetRoomsQuery(
     officeSelector.selected
       ? { officeId: officeSelector.selected.id, ...filters.request }

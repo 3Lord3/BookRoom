@@ -1,19 +1,15 @@
 import { TZDate } from '@date-fns/tz';
 
 export interface Interval {
-  /** ISO 8601 в UTC — формат, который ждёт бэкенд */
+  // ISO 8601 UTC для бэкенда
   from: string;
   to: string;
 }
 
 const toUtcIso = (date: TZDate): string => new Date(date.getTime()).toISOString();
 
-/**
- * Интервал [начало, +длительность) в таймзоне офиса. Арифметика ведётся в минутах,
- * TZDate сам нормализует переполнение (например, минуты > 59) и переводит в UTC-мгновение.
- * API принимает ISO 8601, но отдаём всегда в UTC («Z»): у TZDate toISOString
- * сохраняет смещение таймзоны офиса, поэтому оборачиваем в обычный Date.
- */
+// Интервал [начало, +длительность) в таймзоне офиса. TZDate сам нормализует переполнение
+// минут, а UTC берём через Date, потому что toISOString у TZDate сохраняет смещение офиса
 export function buildInterval(
   date: string,
   time: string,

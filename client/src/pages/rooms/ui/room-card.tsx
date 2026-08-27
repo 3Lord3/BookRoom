@@ -24,7 +24,7 @@ function AvailabilityBar({ available }: { available: boolean }) {
 
 export function RoomCard({ room }: { room: RoomSummary }) {
   const location = useLocation();
-  // Интервал и вместимость переносим в детали комнаты: расписание сразу откроется с ними
+  // Расписание на детальной странице откроется с текущими фильтрами
   const detailUrl = `/rooms/${room.id}${location.search}`;
 
   return (
@@ -52,7 +52,7 @@ export function RoomCard({ room }: { room: RoomSummary }) {
           <Link to={detailUrl}>Подробнее</Link>
         </Button>
         {room.available === false ? (
-          // Недоступную комнату не ведём на бронирование — кнопка только визуально заблокирована
+          // Кнопка только визуально заблокирована, на бронирование не ведёт
           <Button
             className="h-auto flex-1 rounded-8 px-16 py-10 text-xl font-semibold opacity-60"
             disabled

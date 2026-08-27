@@ -22,7 +22,7 @@ export const handlers = [
     if (minCapacity > 0) {
       items = items.filter((room) => room.capacity >= minCapacity);
     }
-    // Как в бэкенде: available появляется только при фильтрации по интервалу
+    // Как в бэкенде: available есть только при фильтрации по интервалу
     if (from && to) {
       items = items.map((room) => ({
         ...room,
@@ -49,7 +49,7 @@ export const handlers = [
     const url = new URL(request.url);
     const from = url.searchParams.get('from');
     const to = url.searchParams.get('to');
-    // Бэкенд требует интервал: зеркалим его валидацию, чтобы тесты ловили потерю параметров
+    // Зеркалим валидацию бэкенда: тесты должны ловить потерю параметров
     if (!from || !to) {
       return HttpResponse.json(
         { error: { code: 'VALIDATION', message: 'Требуются параметры from и to' } },
@@ -103,7 +103,7 @@ export const handlers = [
   http.delete(full('/bookings/:bookingId'), () => new HttpResponse(null, { status: 204 })),
 ];
 
-/** Хендлеры для тестов ошибок — подключаются через server.use(...) внутри конкретного теста. */
+// Подключаются через server.use(...) внутри конкретного теста
 export const errorHandlers = {
   conflict: http.post(full('/bookings'), async () =>
     HttpResponse.json(

@@ -5,9 +5,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 const asString = (value: unknown): string | null => (typeof value === 'string' ? value : null);
 
-// Разбор JSON-сообщения из /api/v1/ws. null — сообщение не является известным
-// событием: мусор и частично битые payload серверного контракта не доходят до
-// обработчиков
+// Битый или неизвестный payload → null, мусор до обработчиков не доходит
 export function parseWsEvent(raw: string): WsEvent | null {
   let message: unknown;
   try {

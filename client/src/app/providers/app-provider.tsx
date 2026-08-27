@@ -9,16 +9,14 @@ import { createStore } from './store';
 
 interface AppProviderProps {
   children: ReactNode;
-  /** Включает real-time-синхронизацию; в тестах не передаётся */
+  // В тестах не передаётся, real-time отключён
   wsClient?: WsClient;
 }
 
 export function AppProvider({ children, wsClient }: AppProviderProps) {
-  // Инициализация один раз на монтирование: store не пересоздаётся при ре-рендерах
   const [store] = useState(() => createStore({ wsClient }));
 
-  // Соединение живёт, пока смонтировано приложение; StrictMode-размонтирование
-  // корректно закрывает его повторным запуском
+  // Соединение живёт, пока приложение смонтировано; повторный запуск эффекта закрывает его корректно
   useEffect(() => {
     if (!wsClient) {
       return;

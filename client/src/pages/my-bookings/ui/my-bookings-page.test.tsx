@@ -25,7 +25,7 @@ describe('MyBookingsPage', () => {
     expect(screen.getByRole('button', { name: 'Предстоящие (1)' })).toBeInTheDocument();
     expect(screen.getByText('Эверест')).toBeInTheDocument();
     expect(screen.getByText('4 этаж')).toBeInTheDocument();
-    // 09:00Z — 12:00 по Москве летом; аббревиатура таймзоны зависит от окружения
+    // 09:00Z = 12:00 по Москве летом; аббревиатура зависит от окружения
     expect(screen.getByText(/^12:00 - 13:00 /)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Отменить' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Скачать \.ics/ })).toBeInTheDocument();
@@ -56,7 +56,6 @@ describe('MyBookingsPage', () => {
 
     expect(await screen.findByText('Ретроспектива')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Отменить' })).not.toBeInTheDocument();
-    // Прошедшая встреча остаётся в URL-состоянии таба
     expect(screen.getByRole('button', { name: 'Прошедшие' })).toBeInTheDocument();
   });
 
@@ -68,7 +67,7 @@ describe('MyBookingsPage', () => {
         cancelled.add(params.bookingId as string);
         return new HttpResponse(null, { status: 204 });
       }),
-      // После отмены список «моих» больше не содержит удалённого бронирования
+      // Список «моих» больше не содержит отменённого бронирования
       http.get(`${API_BASE_URL}/bookings`, () =>
         HttpResponse.json({
           items: myBookings.all.filter((booking) => !cancelled.has(booking.id)),

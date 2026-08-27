@@ -8,7 +8,7 @@ import { errorHandlers } from '../../../mocks/handlers';
 import { server } from '../../../mocks/server';
 import { API_BASE_URL } from '../../../shared/config/env';
 
-/** Дата ближайшего понедельника — синхронно с фикстурами бронирований */
+// Дата ближайшего понедельника, синхронно с фикстурами
 function nextMondayIso(): string {
   const date = new Date();
   const daysUntilMonday = (8 - date.getUTCDay()) % 7 || 7;
@@ -19,7 +19,7 @@ function nextMondayIso(): string {
 
 async function renderDialog() {
   const monday = nextMondayIso();
-  // Интервал 14:00–15:00 по Москве (11:00Z–12:00Z) — открывает модалку
+  // Интервал 14:00–15:00 по Москве (11:00Z–12:00Z)
   window.history.replaceState(
     {},
     '',
@@ -37,7 +37,7 @@ describe('CreateBookingDialog', () => {
 
     expect(title).toBeInTheDocument();
     expect(screen.getByText('Переговорная: Эверест (Офис Москва, 4 этаж)')).toBeInTheDocument();
-    // Летом Москва = UTC+3: 11:00Z — 14:00 по Москве, ближайший понедельник
+    // 11:00Z = 14:00 по Москве летом
     expect(screen.getByText('Тема встречи *')).toBeInTheDocument();
     expect(screen.getByText(/Бронирование на Понедельник/)).toBeInTheDocument();
     expect(screen.getByText(/14:00 - 15:00 \(1 час\)/)).toBeInTheDocument();
@@ -102,7 +102,7 @@ describe('CreateBookingDialog', () => {
     await user.click(screen.getByRole('button', { name: 'Забронировать' }));
 
     expect(await screen.findByText('Внутренняя ошибка сервера')).toBeInTheDocument();
-    // Модалка остаётся открытой, чтобы можно было повторить попытку
+    // Модалка остаётся открытой, можно повторить
     expect(screen.getByRole('heading', { name: 'Новое бронирование' })).toBeInTheDocument();
   });
 
@@ -158,12 +158,11 @@ describe('CreateBookingDialog', () => {
 
     await user.click(screen.getByRole('button', { name: 'Забронировать' }));
 
-    // Заголовок тоста совпадает с одиночным созданием из соседнего теста, а sonner
-    // держит старые тосты в глобальном сторе — проверяем уникальное описание серии
+    // Заголовок тоста совпадает с одиночным созданием, проверяем уникальное описание серии
     expect(await screen.findByText(/^4 встречи · Комната Эверест/)).toBeInTheDocument();
     await waitFor(() => expect(sent).toHaveLength(4));
 
-    // Каждое следующее вхождение серии — на неделю позже
+    // Следующее вхождение серии на неделю позже
     const weekMs = 7 * 24 * 60 * 60 * 1000;
     expect(new Date(sent[1]!).getTime() - new Date(sent[0]!).getTime()).toBe(weekMs);
 

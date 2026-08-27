@@ -5,7 +5,7 @@ export interface SplitBookings {
   past: BookingView[];
 }
 
-/** Разбиение на предстоящие/прошедшие, как на бэкенде (scope=upcoming/past по startsAt). */
+// Как на бэкенде: upcoming/past по startsAt
 export function splitBookings(bookings: BookingView[], now = Date.now()): SplitBookings {
   const upcoming: BookingView[] = [];
   const past: BookingView[] = [];

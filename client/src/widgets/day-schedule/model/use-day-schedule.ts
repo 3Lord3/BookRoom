@@ -24,7 +24,7 @@ import {
 
 import { formatDayTitle } from '../lib/format-day-title';
 
-/** Блок события сетки: границы в минутах суток офиса для позиционирования */
+// Блок события: границы в минутах суток офиса
 export interface ScheduleEventModel {
   key: string;
   start: number;
@@ -41,11 +41,11 @@ export type DayScheduleContent =
       slots: DaySlot[];
       events: ScheduleEventModel[];
       selection: SlotRange | null;
-      /** Начало выбора: клик или зажатие мыши на слоте */
+      // Клик или зажатие мыши на слоте
       onPress: (slotIndex: number) => void;
-      /** Расширение диапазона при перетаскивании указателя по слотам */
+      // Расширение диапазона при перетаскивании
       onDragOver: (slotIndex: number) => void;
-      /** Выбранный интервал как UTC-границы; null — выбор ещё не сделан */
+      // UTC-границы выбранного интервала; null, пока выбор не сделан
       bookedInterval: Interval | null;
       book: () => void;
     };
@@ -59,20 +59,15 @@ export interface DayScheduleModel {
   content: DayScheduleContent;
 }
 
-/**
- * Расписание комнаты на день. Дата живёт в searchParams (?date=), выбранный
- * интервал — в локальном стейте; подтверждённый интервал уходит обратно в URL
- * (?from=&to=) — так форма бронирования (фаза 3) получит его без нового стейта.
- */
+// Дата живёт в searchParams (?date=), интервал в локальном стейте; подтверждённый
+// уходит обратно в URL (?from=&to=), откуда его забирает форма бронирования
 export function useDaySchedule(roomId: string, timezone: string): DayScheduleModel {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const date = parseDateParam(searchParams.get('date'), todayInTimezone(timezone));
 
-  // Выбор привязан к своему дню: на другом дне он скрыт, но при возврате
-  // восстанавливается; валидность по свежим слотам пересчитывается на каждом рендере.
-  // origin различает выбор кликом и перетаскиванием — после drag следующее нажатие
-  // обязано начинать новый диапазон, а не расширять прежний
+  // Выбор привязан к своему дню; origin различает клик и drag, после drag
+  // следующее нажатие начинает новый диапазон
   const [stored, setStored] = useState<{
     date: string;
     range: SlotRange;
@@ -98,8 +93,7 @@ export function useDaySchedule(roomId: string, timezone: string): DayScheduleMod
   const scheduleResult = useGetRoomBookingsQuery({ roomId, from: range.from, to: range.to });
   const viewerResult = useGetViewerQuery();
   const viewerId = viewerResult.data?.id ?? null;
-  // Свои брони различимы только по ответу /me: до него события скрыты целиком,
-  // иначе своя бронь мелькает обезличенным «Занято»; при ошибке /me все — как «Занято»
+  // До ответа /me события скрыты: своя бронь иначе мелькает чужим «Занято»
   const viewerKnown = !viewerResult.isLoading;
 
   const slots = useMemo(() => {
@@ -112,8 +106,7 @@ export function useDaySchedule(roomId: string, timezone: string): DayScheduleMod
     return markBusySlots(buildDaySlots(), busy);
   }, [scheduleResult.data, timezone]);
 
-  // После refetch выбор мог «попасть» на чужое бронирование — такой выбор
-  // игнорируется: валидность проверяется на каждом рендере, без эффекта
+  // После refetch выбор мог попасть на чужую бронь, валидность считаем на каждом рендере
   const validSelection = selection !== null && isRangeFree(slots, selection) ? selection : null;
 
   const events = useMemo<ScheduleEventModel[]>(() => {
@@ -146,16 +139,14 @@ export function useDaySchedule(roomId: string, timezone: string): DayScheduleMod
     setStored((current) => {
       const previous = current?.date === date ? current.range : null;
       const previousOrigin = current?.date === date ? current.origin : null;
-      // После drag следующее нажатие начинает новый диапазон; origin возвращаем
-      // в click, чтобы последующие нажатия снова расширяли выбор
+      // origin возвращаем в click, чтобы следующие нажатия снова расширяли выбор
       if (previousOrigin === 'drag') {
         return { date, range: { startIndex: slotIndex, endIndex: slotIndex }, origin: 'click' };
       }
       if (!previous) {
         return { date, range: { startIndex: slotIndex, endIndex: slotIndex }, origin: 'click' };
       }
-      // Расширяем от ближней границы выбора к нажатой ячейке: рост
-      // останавливается на первом занятом слоте (clampFreeRange)
+      // Расширяем к нажатой ячейке, рост останавливает занятый слот (clampFreeRange)
       if (slotIndex > previous.endIndex) {
         return {
           date,
@@ -181,7 +172,7 @@ export function useDaySchedule(roomId: string, timezone: string): DayScheduleMod
     });
   };
 
-  // Расширение диапазона при перетаскивании: от якоря (начального слота) к курсору
+  // Расширение от якоря к курсору при перетаскивании
   const onDragOver = (slotIndex: number) => {
     if (slots[slotIndex]?.busy) {
       return;
@@ -221,8 +212,7 @@ export function useDaySchedule(roomId: string, timezone: string): DayScheduleMod
     [validSelection, date, timezone],
   );
 
-  // Модалка открывается и без выделенного интервала — пустой формой;
-  // create оставляет её открытой после сброса from/to
+  // Модалка открывается и без интервала пустой формой; create оставляет её открытой
   const book = () => {
     updateParams((next) => {
       if (bookedInterval) {

@@ -135,7 +135,6 @@ describe('real-time-sync middleware', () => {
     expect(counters.rooms).toBe(1);
     expect(counters.myBookings).toBe(1);
 
-    // установленное соединение теряется и восстанавливается
     ws.emitStatus('reconnecting');
     ws.emitStatus('connected');
 

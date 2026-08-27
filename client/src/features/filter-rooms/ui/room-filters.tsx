@@ -26,7 +26,7 @@ import type { RoomFiltersModel } from '../model/use-room-filters';
 const DURATION_OPTIONS = [15, 30, 45, 60, 75, 90, 105, 120] as const;
 const CAPACITY_OPTIONS = [2, 4, 6, 8, 10, 12] as const;
 
-/** Обёртка контрола из макета: иконка + значение в рамке с радиусом 8 */
+// Обёртка контрола: иконка + значение в рамке
 const controlClass =
   'flex h-auto w-auto items-center gap-8 rounded-8 border border-border bg-transparent px-14 py-10 text-xl font-normal text-foreground shadow-none';
 
@@ -40,8 +40,7 @@ function FilterItem({ label, children }: { label: string; children: React.ReactN
 }
 
 function DateControl({ model, timezone }: { model: RoomFiltersModel; timezone: string | null }) {
-  // Границы календаря сравниваем по строкам YYYY-MM-DD в таймзоне офиса,
-  // а не по инстантам — иначе сутки съезжают при несовпадении зон браузера и офиса
+  // Границы по строкам YYYY-MM-DD в таймзоне офиса, иначе сутки съезжают
   const minDate = timezone ? todayInTimezone(timezone) : null;
   const maxDate = minDate ? format(addDays(parseISO(minDate), MAX_AHEAD_DAYS), 'yyyy-MM-dd') : null;
 
@@ -74,8 +73,7 @@ function DateControl({ model, timezone }: { model: RoomFiltersModel; timezone: s
 }
 
 function TimeControl({ model }: { model: RoomFiltersModel }) {
-  // Черновик ввода живёт локально; при внешней смене времени (сброс, другой офис)
-  // контрол пересоздаётся через key с актуальным начальным значением
+  // Черновик локальный; при внешней смене времени контрол пересоздаётся через key
   const [draft, setDraft] = useState(model.time ?? '');
 
   const commit = () => {
@@ -128,7 +126,7 @@ export function RoomFilters({
           <SelectTrigger
             className={cn(
               controlClass,
-              // База shadcn задаёт фиксированную высоту по data-size — выравниваем с кнопками фильтров
+              // База shadcn задаёт высоту по data-size, выравниваем с кнопками фильтров
               'data-[size=default]:h-auto [&>svg]:size-16 [&>svg]:opacity-100',
             )}
           >
@@ -154,7 +152,7 @@ export function RoomFilters({
           <SelectTrigger
             className={cn(
               controlClass,
-              // База shadcn задаёт фиксированную высоту по data-size — выравниваем с кнопками фильтров
+              // База shadcn задаёт высоту по data-size, выравниваем с кнопками фильтров
               'data-[size=default]:h-auto [&>svg]:size-16 [&>svg]:opacity-100',
             )}
           >

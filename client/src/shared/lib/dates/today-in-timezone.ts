@@ -1,6 +1,6 @@
 import { TZDate } from '@date-fns/tz';
 
-/** Сегодняшняя дата в таймзоне офиса, «YYYY-MM-DD» */
+// Сегодня в таймзоне офиса как «YYYY-MM-DD»
 export function todayInTimezone(timezone: string, now = new Date()): string {
   const localNow = new TZDate(now.getTime(), timezone);
   const pad = (value: number) => String(value).padStart(2, '0');

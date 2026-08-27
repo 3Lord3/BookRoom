@@ -5,7 +5,7 @@ import type { BookingView } from '@shared/api/dto';
 import { buildBookingIcs, toUtcStamp } from './ics';
 import { myBookings } from '../../../mocks/fixtures';
 
-// Планирование спринта, 24 августа 2026, 11:00–12:00 UTC — поле не меняется от дня прогона
+// 24 августа 2026, 11:00–12:00 UTC, не зависит от дня прогона
 const booking: BookingView = {
   ...myBookings.all[0]!,
   title: 'Планирование, спринт; (важное) \\ тест',
@@ -14,7 +14,7 @@ const booking: BookingView = {
   endsAt: '2026-08-24T12:00:00.000Z',
 };
 
-// Разворачивает физические строки в логическую строку .ics (RFC 5545 §3.1)
+// Физические строки в логическую строку .ics (RFC 5545 §3.1)
 function unfoldIcsLine(ics: string, name: string): string {
   const lines = ics.split('\r\n');
   const start = lines.findIndex((line) => line.startsWith(`${name}:`));

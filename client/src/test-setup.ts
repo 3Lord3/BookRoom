@@ -5,7 +5,7 @@ import { afterAll, afterEach, beforeAll } from 'vitest';
 
 import { server } from './mocks/server';
 
-// jsdom не реализует matchMedia/ResizeObserver — нужны sonner и радиксовским поповерам
+// jsdom не реализует их, а sonner и поповеры Radix требуют
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
   value: (query: string) => ({
@@ -28,14 +28,14 @@ class ResizeObserverStub {
 window.ResizeObserver =
   window.ResizeObserver ?? (ResizeObserverStub as unknown as typeof ResizeObserver);
 
-// jsdom не реализует PointerCapture — радиксовский Select полагается на него
+// jsdom не реализует PointerCapture, а Select из Radix полагается на него
 if (!Element.prototype.hasPointerCapture) {
   Element.prototype.hasPointerCapture = () => false;
   Element.prototype.setPointerCapture = () => undefined;
   Element.prototype.releasePointerCapture = () => undefined;
 }
 
-// jsdom не реализует scrollIntoView — Select прокручивает к выбранному пункту
+// jsdom не реализует scrollIntoView, а Select прокручивает к выбранному пункту
 if (!Element.prototype.scrollIntoView) {
   Element.prototype.scrollIntoView = () => undefined;
 }

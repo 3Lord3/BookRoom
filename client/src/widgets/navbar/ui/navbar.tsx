@@ -37,7 +37,7 @@ export function Navbar() {
         ))}
       </nav>
 
-      {/* Авторизация замокана: сбой /me не должен мешать навигации, просто скрываем профиль */}
+      {/* Сбой /me не должен мешать навигации, профиль просто скрываем */}
       {viewer.status === 'loading' && <Skeleton className="size-40 rounded-full" />}
       {viewer.status === 'success' && (
         <div className="flex items-center gap-12">

@@ -1,7 +1,4 @@
-/**
- * DTO REST-контракта бэкенда (/api/v1). Живут в shared, потому что на них
- * опираются несколько слайсов entities, а сами слайсы между собой импортировать нельзя.
- */
+// DTO REST-контракта бэкенда (/api/v1); общие для нескольких слайсов entities
 
 export interface User {
   id: string;
@@ -33,7 +30,7 @@ export interface Room {
   features: RoomFeature[];
 }
 
-/** Комната в списке: всегда с офисом, при фильтрации по интервалу — с доступностью. */
+// Доступность появляется при фильтрации по интервалу
 export interface RoomSummary extends Room {
   office: Office;
   available?: boolean;
@@ -47,7 +44,6 @@ export interface BookingView {
   userId: string;
   title: string;
   comment: string | null;
-  /** ISO 8601 UTC */
   startsAt: string;
   endsAt: string;
   createdAt: string;

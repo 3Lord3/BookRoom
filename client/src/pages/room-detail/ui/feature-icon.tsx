@@ -1,6 +1,6 @@
 import { Check, PenLine, Tv, Users, Video, type LucideIcon } from 'lucide-react';
 
-/** Иконки оснащения из макета; незнакомый код — нейтральная галочка */
+// Незнакомый код заменяем нейтральной галочкой
 const FEATURE_ICONS: Record<string, LucideIcon> = {
   display: Tv,
   whiteboard: PenLine,

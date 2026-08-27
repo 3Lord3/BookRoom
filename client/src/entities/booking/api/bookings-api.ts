@@ -3,7 +3,7 @@ import type { BookingView, CreateBookingRequest, MyBookingsParams } from '@share
 
 export interface RoomBookingsParams {
   roomId: string;
-  /** ISO 8601 в UTC; бэкенд требует интервал */
+  // ISO 8601 UTC; бэкенд требует интервал
   from: string;
   to: string;
 }
@@ -28,8 +28,7 @@ export const bookingsApi = baseApi.injectEndpoints({
       query: (bookingId) => ({ url: `/bookings/${bookingId}`, method: 'DELETE' }),
       invalidatesTags: ['MyBookings', 'Room', 'RoomSchedule'],
       async onQueryStarted(bookingId, { dispatch, getState, queryFulfilled }) {
-        // Оптимистичная отмена: бронирование исчезает из всех закэшированных списков
-        // сразу, ещё до ответа сервера; при сбое изменения откатываются
+        // Оптимистичная отмена: бронь исчезает из кэша сразу, при сбое откатывается
         const cachedArgs = bookingsApi.util.selectCachedArgsForQuery(getState(), 'getMyBookings');
         const rollbacks = cachedArgs.map((args) =>
           dispatch(

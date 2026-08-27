@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { createBookingSchema } from './booking-schema';
 
-/** Фикс. «сейчас» — 09:00 по Москве (UTC+3 летом) */
+// 09:00 по Москве, UTC+3 летом
 const NOW = new Date('2026-08-24T06:00:00.000Z');
 
 const schema = () => createBookingSchema({ timezone: 'Europe/Moscow', now: NOW });
@@ -99,7 +99,7 @@ describe('createBookingSchema', () => {
   });
 
   it('отклоняет серию, последнее вхождение которой выходит за +30 дней', () => {
-    // База 24.08 + 5 недель = 28.09, что дальше горизонта (23.09)
+    // 24.08 + 5 недель = 28.09, дальше горизонта (23.09)
     const result = schema().safeParse({ ...valid, repeat: 'weekly', occurrences: 6 });
     expect(result.success).toBe(false);
     if (!result.success) {

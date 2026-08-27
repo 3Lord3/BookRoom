@@ -5,7 +5,7 @@ import { App } from '@app';
 import { WS_URL } from '@shared/config/env';
 import { createWsClient } from '@shared/lib/ws';
 
-// Клиент создаётся один раз на загрузку; соединение открывает AppProvider (effect)
+// Клиент создаём один раз; соединение открывает AppProvider
 const wsClient = createWsClient({ url: WS_URL });
 
 createRoot(document.getElementById('root')!).render(

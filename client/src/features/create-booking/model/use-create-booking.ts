@@ -23,16 +23,16 @@ import { buildOccurrenceSeries } from '../lib/recurrence';
 
 const FROM_KEY = 'from';
 const TO_KEY = 'to';
-/** Открывает модалку и без интервала из расписания — пустой формой */
+// Открывает модалку и без интервала, пустой формой
 const CREATE_KEY = 'create';
 
-/** Достаёт ISO-мгновение из searchParams или null, если параметра нет. */
+// ISO-мгновение из searchParams либо null
 function paramIso(params: URLSearchParams, key: string): string | null {
   const value = params.get(key);
   return value && Number.isFinite(Date.parse(value)) ? value : null;
 }
 
-/** UTC-интервал из URL → значения полей формы (в таймзоне офиса). */
+// UTC-интервал в значения полей формы
 function valuesFromInterval(
   from: string,
   to: string,
@@ -48,26 +48,22 @@ function valuesFromInterval(
 
 export interface CreateBookingModel {
   open: boolean;
-  /** Интервал из URL для предзаполнения формы; null — открыта пустая форма */
+  // Интервал из URL для предзаполнения; null, если форма пустая
   interval: { from: string; to: string } | null;
-  /** Сводка под формой из текущих значений */
   summary: string | null;
-  /** true — сервер вернул 409, показать отдельное состояние конфликта */
+  // Сервер вернул 409, показываем состояние конфликта
   conflict: boolean;
   isSubmitting: boolean;
-  /** Прогресс серии повторов: сколько отправлено из общего числа; null — не серия */
+  // Прогресс серии: отправлено из общего числа; null, если не серия
   progress: { done: number; total: number } | null;
   close: () => void;
-  /** Возвращает на форму после конфликта (закрывает конфликтное состояние) */
+  // Возврат на форму после конфликта
   resolveConflict: () => void;
   submit: (values: BookingForm) => void;
   form: ReturnType<typeof useForm<BookingForm>>;
 }
 
-/**
- * Создание бронирования. Интервал приходит из URL (?from=&to=), куда его
- * кладёт расписание комнаты; наличие параметров открывает модалку.
- */
+// Интервал приходит из URL (?from=&to=) от расписания комнаты и открывает модалку
 export function useCreateBooking(
   roomId: string | null,
   timezone: string,
@@ -97,7 +93,7 @@ export function useCreateBooking(
     mode: 'onSubmit',
   });
 
-  // При открытии на новом интервале (или после закрытия) форма стартует с его значений
+  // Форма стартует со значений интервала при его смене
   const intervalKey = interval ? `${interval.from}|${interval.to}` : '';
   useEffect(() => {
     if (interval) {
@@ -116,7 +112,7 @@ export function useCreateBooking(
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const dispatch = useDispatch();
 
-  // Первый рендер отдаёт defaultValue, пока поля формы не зарегистрированы
+  // Первый рендер отдаёт defaultValue, поля ещё не зарегистрированы
   const watched = useWatch({
     control: form.control,
     defaultValue: { date: '', startTime: '', duration: 60, repeat: 'none', occurrences: 4 },
@@ -152,7 +148,7 @@ export function useCreateBooking(
     }
     const built = buildInterval(values.date, values.startTime, values.duration, timezone);
     const count = values.repeat === 'weekly' ? values.occurrences : 1;
-    // Одиночная бронь сохраняет отдельное состояние конфликта, у серии — сводный итог
+    // У одиночной брони отдельное состояние конфликта, у серии сводный итог
     if (count === 1) {
       await submitSingle(roomId, built, values);
       return;
@@ -182,14 +178,13 @@ export function useCreateBooking(
     } catch (error) {
       if (getApiErrorCode(error) === API_ERROR_CODES.bookingConflict) {
         form.setError('root', { type: 'conflict' });
-        // Слот уже занят — «Расписание обновлено» из макета: сбрасываем кэш открытого расписания
+        // «Расписание обновлено» из макета: сбрасываем кэш открытого расписания
         if (room) {
           dispatch(baseApi.util.invalidateTags([{ type: 'RoomSchedule', id: room }]));
         }
         return;
       }
-      // Сбой сети, 5xx или отклонение валидацией сервера — показываем сообщение,
-      // иначе запрос провалится молча и пользователь этого не увидит
+      // Показываем сообщение, иначе сбой пройдёт незаметно
       toast.error(getApiErrorMessage(error) ?? 'Не удалось создать бронирование');
     }
   };
@@ -214,10 +209,9 @@ export function useCreateBooking(
       });
       close();
     } else if (created === 0) {
-      // Ничего не создано — остаёмся на форме, чтобы исправить параметры и повторить
+      // Остаёмся на форме, чтобы исправить параметры и повторить
       toast.error(failed[0] ?? 'Не удалось создать бронирования');
     } else {
-      // Частичный сбой: созданные брони валидны, неудачные остались незаполненными
       toast.error('Созданы не все бронирования', {
         description: `Создано ${created} из ${series.length}`,
       });
