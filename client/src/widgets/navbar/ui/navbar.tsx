@@ -1,4 +1,3 @@
-import { CalendarCheck } from 'lucide-react';
 import { Link, NavLink } from 'react-router-dom';
 
 import { cn } from '@shared/lib/cn';
@@ -12,9 +11,7 @@ export function Navbar() {
   return (
     <header className="flex h-72 items-center justify-between border-b border-border bg-card px-40">
       <Link to="/rooms" className="flex items-center gap-12">
-        <span className="flex size-36 items-center justify-center rounded-10 bg-primary">
-          <CalendarCheck className="size-18 text-white" strokeWidth={2} />
-        </span>
+        <img src="/favicon.svg" alt="Логотип BookRoom" className="size-36" />
         <span className="text-5xl font-extrabold">BookRoom</span>
       </Link>
 
