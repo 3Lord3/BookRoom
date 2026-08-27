@@ -1,4 +1,4 @@
-import { Building2, SearchX, TriangleAlert } from 'lucide-react';
+import { Building, SearchX, TriangleAlert } from 'lucide-react';
 
 import { RoomFilters } from '@features/filter-rooms';
 import { OfficeSelector } from '@features/select-office';
@@ -19,13 +19,13 @@ export function RoomsPage() {
         <OfficeSelector model={officeSelector} />
       </div>
       <div className="border-b border-border">
-        <RoomFilters model={filters} timezone={timezone} />
+        <RoomFilters model={filters} timezone={timezone} disabled={content.status === 'no-office'} />
       </div>
 
       {content.status === 'no-office' && (
         <StateBlock
           tone="teal"
-          icon={<Building2 strokeWidth={2} />}
+          icon={<Building strokeWidth={2.5} />}
           title="Выберите офис"
           subtitle="Для просмотра доступных переговорных сначала выберите офис из списка выше"
         />
