@@ -48,7 +48,7 @@ export function DaySchedule({ roomId, timezone }: DayScheduleProps) {
       {model.content.status === 'error' && (
         <div className="flex flex-col items-center justify-center gap-24 py-80 text-center">
           <div className="flex size-120 items-center justify-center rounded-full bg-red-100 text-red-600 [&_svg]:size-48">
-            <TriangleAlert strokeWidth={2} />
+            <TriangleAlert strokeWidth={2.5} />
           </div>
           <div className="flex max-w-[420px] flex-col items-center gap-12">
             <h2 className="text-6xl font-extrabold">Не удалось загрузить расписание</h2>
@@ -77,7 +77,7 @@ export function DaySchedule({ roomId, timezone }: DayScheduleProps) {
                   type="button"
                   className="flex items-center gap-8 rounded-8 border border-border px-16 py-10 text-xl font-semibold"
                 >
-                  <CalendarIcon className="size-16 shrink-0 text-blue-700" strokeWidth={2} />
+                  <CalendarIcon className="size-16 shrink-0 text-blue-700" strokeWidth={2.5} />
                   Выбрать дату
                 </button>
               </PopoverTrigger>

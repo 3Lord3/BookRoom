@@ -17,7 +17,7 @@ export function BookingOfficeFilter({ model }: { model: OfficeSelectorModel }) {
           className="flex h-[39px] cursor-pointer items-center gap-8 rounded-8 border border-border bg-card px-16 text-xl outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
         >
           {model.selected?.name ?? 'Все офисы'}
-          <ChevronDown className="size-16 text-blue-700" strokeWidth={2} />
+          <ChevronDown className="size-16 text-blue-700" strokeWidth={2.5} />
         </button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-max p-8">
@@ -41,7 +41,7 @@ export function BookingOfficeFilter({ model }: { model: OfficeSelectorModel }) {
               className="flex cursor-pointer items-center justify-between gap-16 rounded-6 px-8 py-6 text-left text-xl hover:bg-accent"
             >
               Все офисы
-              {!model.selected && <Check className="size-16 text-teal-700" strokeWidth={2} />}
+              {!model.selected && <Check className="size-16 text-teal-700" strokeWidth={2.5} />}
             </button>
             {model.offices.data.map((office) => (
               <button
@@ -61,7 +61,7 @@ export function BookingOfficeFilter({ model }: { model: OfficeSelectorModel }) {
                   <span className="text-lg text-blue-700">{office.address}</span>
                 </span>
                 {office.id === model.selectedId && (
-                  <Check className="size-16 text-teal-700" strokeWidth={2} />
+                  <Check className="size-16 text-teal-700" strokeWidth={2.5} />
                 )}
               </button>
             ))}

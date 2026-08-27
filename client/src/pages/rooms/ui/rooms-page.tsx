@@ -34,7 +34,7 @@ export function RoomsPage() {
       {content.status === 'error' && (
         <StateBlock
           tone="red"
-          icon={<TriangleAlert strokeWidth={2} />}
+          icon={<TriangleAlert strokeWidth={2.5} />}
           title="Не удалось загрузить данные"
           subtitle="Произошла ошибка при загрузке списка переговорных"
           action={{ label: 'Попробовать снова', onClick: content.retry }}
@@ -44,7 +44,7 @@ export function RoomsPage() {
       {content.status === 'empty' && (
         <StateBlock
           tone="gray"
-          icon={<SearchX strokeWidth={2} />}
+          icon={<SearchX strokeWidth={2.5} />}
           title="Нет доступных переговорных"
           subtitle="Попробуйте изменить параметры фильтрации или выбрать другой офис"
           action={{ label: 'Сбросить фильтры', onClick: filters.reset }}

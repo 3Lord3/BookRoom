@@ -37,11 +37,11 @@ export function CancelBookingDialog({ model }: { model: CancelBookingModel }) {
               <h3 className="text-2xl font-bold">{target.title}</h3>
               <div className="flex flex-col gap-6 text-lg text-blue-700">
                 <div className="flex items-center gap-8">
-                  <DoorOpen className="size-14 shrink-0" strokeWidth={2} />
+                  <DoorOpen className="size-14 shrink-0" strokeWidth={2.5} />
                   {formatBookingRoom(target.room)}
                 </div>
                 <div className="flex items-center gap-8">
-                  <CalendarIcon className="size-14 shrink-0" strokeWidth={2} />
+                  <CalendarIcon className="size-14 shrink-0" strokeWidth={2.5} />
                   {formatBookingFull(target, target.office.timezone)}
                 </div>
               </div>

@@ -20,7 +20,7 @@ export function OfficeSelector({ model }: { model: OfficeSelectorModel }) {
             className="flex items-center gap-8 rounded-8 outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
           >
             <span className="text-4xl font-bold">{selected?.name ?? 'Выберите офис'}</span>
-            <ChevronDown className="size-16 text-muted-foreground" strokeWidth={2} />
+            <ChevronDown className="size-16 text-muted-foreground" strokeWidth={2.5} />
           </button>
         </PopoverTrigger>
         <PopoverContent align="start" className="w-max p-8">

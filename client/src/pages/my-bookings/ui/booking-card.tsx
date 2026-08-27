@@ -33,7 +33,7 @@ export function BookingCard({ booking, onCancel }: BookingCardProps) {
         <div className="flex min-w-0 flex-col gap-8">
           <h3 className="truncate text-4xl font-bold">{booking.title}</h3>
           <div className="flex items-center gap-8">
-            <DoorOpen className="size-16 shrink-0 text-blue-700" strokeWidth={2} />
+            <DoorOpen className="size-16 shrink-0 text-blue-700" strokeWidth={2.5} />
             <span className="text-xl font-semibold text-teal-700">{booking.room.name}</span>
             <span aria-hidden className="size-4 rounded-full bg-blue-400" />
             <span className="text-xl text-blue-700">{booking.room.floor} этаж</span>

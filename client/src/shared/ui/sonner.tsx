@@ -6,7 +6,7 @@ import { Toaster as Sonner, type ToasterProps } from 'sonner';
 
 // Инверсию цвета задаёт CSS по [data-icon] svg
 const badgeIcon = (Icon: typeof Check) => (
-  <Icon className="size-20 text-teal-900" strokeWidth={2} />
+  <Icon className="size-20 text-teal-900" strokeWidth={2.5} />
 );
 
 const Toaster = ({ ...props }: ToasterProps) => {
@@ -25,8 +25,8 @@ const Toaster = ({ ...props }: ToasterProps) => {
         info: badgeIcon(Info),
         warning: badgeIcon(TriangleAlert),
         error: badgeIcon(OctagonX),
-        loading: <Loader2 className="size-20 animate-spin text-teal-900" strokeWidth={2} />,
-        close: <X className="size-14 text-blue-400" strokeWidth={2} />,
+        loading: <Loader2 className="size-20 animate-spin text-teal-900" strokeWidth={2.5} />,
+        close: <X className="size-14 text-blue-400" strokeWidth={2.5} />,
       }}
       style={
         {

@@ -36,7 +36,7 @@ export function RoomCard({ room }: { room: RoomSummary }) {
 
       <div className="flex flex-col gap-8 text-lg text-blue-700">
         <div className="flex items-center gap-8">
-          <Users className="size-16 shrink-0" strokeWidth={2} />
+          <Users className="size-16 shrink-0" strokeWidth={2.5} />
           Вместимость: до {room.capacity} человек
         </div>
       </div>
