@@ -46,8 +46,8 @@ export function RoomCard({ room }: { room: RoomSummary }) {
       <div className="flex items-center gap-12">
         <Button
           asChild
-          variant="outline"
-          className="h-auto flex-1 rounded-8 px-16 py-10 text-xl font-semibold"
+          variant="link"
+          className="h-auto flex-1 rounded-8 px-16 py-10 text-xl font-semibold hover:no-underline"
         >
           <Link to={detailUrl}>Подробнее</Link>
         </Button>

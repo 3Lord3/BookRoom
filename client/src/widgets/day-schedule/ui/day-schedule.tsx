@@ -117,7 +117,8 @@ function HourRow({ label }: { label: string }) {
   return (
     <div className="grid h-48 grid-cols-[60px_1fr]">
       <span className="self-start text-lg leading-none text-blue-400">{label}</span>
-      <div aria-hidden className="border border-border" />
+      {/* Разделитель не доходит до правого края, как в макете */}
+      <div aria-hidden className="mr-12 border-t border-border" />
     </div>
   );
 }
