@@ -1,6 +1,7 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
+import { useEffect } from 'react';
 import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 
 import { useDaySchedule } from './use-day-schedule';
@@ -18,11 +19,25 @@ function nextMonday(): string {
   return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}`;
 }
 
+// MemoryRouter не пишет в window.location, поиск читаем из текущего роута
+let currentSearch = '';
+
+function LocationProbe() {
+  const location = useLocation();
+  useEffect(() => {
+    currentSearch = location.search;
+  }, [location.search]);
+  return null;
+}
+
 function makeWrapper(initialEntry: string) {
   return function Wrapper({ children }: { children: React.ReactNode }) {
     return (
       <Provider store={createStore()}>
-        <MemoryRouter initialEntries={[initialEntry]}>{children}</MemoryRouter>
+        <MemoryRouter initialEntries={[initialEntry]}>
+          <LocationProbe />
+          {children}
+        </MemoryRouter>
       </Provider>
     );
   };
@@ -43,45 +58,36 @@ function content(view: ReturnType<typeof renderSchedule>) {
   return current;
 }
 
-describe('useDaySchedule: выбор интервала', () => {
-  it('клик по слоту даёт минимальный интервал, следующий клик расширяет диапазон', async () => {
+describe('useDaySchedule', () => {
+  it('загружает события дня и отличает своё бронирование от чужого', async () => {
     const view = renderSchedule(`/rooms/${ROOM_ID}?date=${nextMonday()}`);
-    await waitFor(() => expect(content(view).slots.length).toBeGreaterThan(0));
+    await waitFor(() => expect(content(view).events.length).toBeGreaterThan(0));
 
-    act(() => content(view).onPress(20));
-    expect(content(view).selection).toEqual({ startIndex: 20, endIndex: 20 });
-
-    act(() => content(view).onPress(23));
-    expect(content(view).selection).toEqual({ startIndex: 20, endIndex: 23 });
+    const events = content(view).events;
+    expect(events.some((event) => event.kind === 'own')).toBe(true);
+    expect(events.some((event) => event.kind === 'other')).toBe(true);
   });
 
-  it('после перетаскивания следующий клик начинает новый диапазон, а не схлопывает выбор', async () => {
+  it('book открывает форму без интервала: только ?create=1', async () => {
     const view = renderSchedule(`/rooms/${ROOM_ID}?date=${nextMonday()}`);
-    await waitFor(() => expect(content(view).slots.length).toBeGreaterThan(0));
+    await waitFor(() => expect(content(view).events.length).toBeGreaterThan(0));
 
-    // Перетаскивание 20 → 22
-    act(() => content(view).onPress(20));
-    act(() => content(view).onDragOver(22));
-    expect(content(view).selection).toEqual({ startIndex: 20, endIndex: 22 });
+    act(() => content(view).book());
 
-    // Клик после drag начинает новый интервал с одной ячейки
-    act(() => content(view).onPress(24));
-    expect(content(view).selection).toEqual({ startIndex: 24, endIndex: 24 });
-
-    // origin уже click, следующий клик снова расширяет
-    act(() => content(view).onPress(26));
-    expect(content(view).selection).toEqual({ startIndex: 24, endIndex: 26 });
+    const params = new URLSearchParams(currentSearch);
+    expect(params.get('create')).toBe('1');
+    expect(params.get('from')).toBeNull();
+    expect(params.get('to')).toBeNull();
   });
 
-  it('занятый слот сбрасывает выбор', async () => {
+  it('selectDate обновляет дату в URL', async () => {
     const view = renderSchedule(`/rooms/${ROOM_ID}?date=${nextMonday()}`);
-    await waitFor(() => expect(content(view).slots.length).toBeGreaterThan(0));
+    await waitFor(() => expect(content(view).events.length).toBeGreaterThan(0));
 
-    act(() => content(view).onPress(20));
-    expect(content(view).selection).not.toBeNull();
+    const other = '2026-08-30';
+    act(() => view.result.current.selectDate(other));
 
-    // 18:00–18:15 (индекс 36) занят чужим бронированием
-    act(() => content(view).onPress(36));
-    expect(content(view).selection).toBeNull();
+    const params = new URLSearchParams(currentSearch);
+    expect(params.get('date')).toBe(other);
   });
 });

@@ -27,59 +27,36 @@ function makeWrapper(initialEntry: string) {
 }
 
 describe('useCreateBooking', () => {
-  it('без интервала в URL модалка закрыта', () => {
+  it('без create=1 в URL модалка закрыта', () => {
     const { result } = renderHook(
       () => useCreateBooking('room-everest', 'Europe/Moscow', 'Эверест'),
       { wrapper: makeWrapper('/rooms/room-everest') },
     );
 
     expect(result.current.open).toBe(false);
-    expect(result.current.interval).toBeNull();
   });
 
-  it('по интервалу из URL открывается и выводит значения полей в таймзоне офиса', () => {
-    // 11:00Z = 14:00 по Москве летом
-    const { result } = renderHook(
-      () => useCreateBooking('room-everest', 'Europe/Moscow', 'Эверест'),
-      {
-        wrapper: makeWrapper(
-          `/rooms/room-everest?from=${NEXT_MONDAY}T11:00:00.000Z&to=${NEXT_MONDAY}T12:00:00.000Z`,
-        ),
-      },
-    );
-
-    expect(result.current.open).toBe(true);
-    expect(result.current.form.getValues('date')).toBe(NEXT_MONDAY);
-    expect(result.current.form.getValues('startTime')).toBe('14:00');
-    expect(result.current.form.getValues('duration')).toBe(60);
-    expect(result.current.summary).toContain('14:00 - 15:00');
-  });
-
-  it('close() очищает интервал из URL и закрывает модалку', () => {
-    const { result } = renderHook(
-      () => useCreateBooking('room-everest', 'Europe/Moscow', 'Эверест'),
-      {
-        wrapper: makeWrapper(
-          `/rooms/room-everest?from=${NEXT_MONDAY}T11:00:00.000Z&to=${NEXT_MONDAY}T12:00:00.000Z`,
-        ),
-      },
-    );
-
-    expect(result.current.open).toBe(true);
-    act(() => result.current.close());
-    expect(result.current.open).toBe(false);
-  });
-
-  it('по create=1 без интервала открывается пустой формой', () => {
+  it('по create=1 открывается пустой формой без интервала', () => {
     const { result } = renderHook(
       () => useCreateBooking('room-everest', 'Europe/Moscow', 'Эверест'),
       { wrapper: makeWrapper('/rooms/room-everest?create=1') },
     );
 
     expect(result.current.open).toBe(true);
-    expect(result.current.interval).toBeNull();
     expect(result.current.form.getValues('date')).toBe('');
+    expect(result.current.form.getValues('startTime')).toBe('');
     expect(result.current.summary).toBeNull();
+  });
+
+  it('close() очищает create из URL и закрывает модалку', () => {
+    const { result } = renderHook(
+      () => useCreateBooking('room-everest', 'Europe/Moscow', 'Эверест'),
+      { wrapper: makeWrapper('/rooms/room-everest?create=1') },
+    );
+
+    expect(result.current.open).toBe(true);
+    act(() => result.current.close());
+    expect(result.current.open).toBe(false);
   });
 
   it('еженедельный повтор отправляет серию POST с прогрессом', async () => {

@@ -1,6 +1,5 @@
-import { TZDate } from '@date-fns/tz';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { useDispatch } from 'react-redux';
 import { useSearchParams } from 'react-router-dom';
@@ -21,35 +20,18 @@ import {
 } from '../lib/format-summary';
 import { buildOccurrenceSeries } from '../lib/recurrence';
 
-const FROM_KEY = 'from';
-const TO_KEY = 'to';
-// Открывает модалку и без интервала, пустой формой
+// Открывает модалку пустой формой
 const CREATE_KEY = 'create';
 
-// ISO-мгновение из searchParams либо null
-function paramIso(params: URLSearchParams, key: string): string | null {
-  const value = params.get(key);
-  return value && Number.isFinite(Date.parse(value)) ? value : null;
-}
-
-// UTC-интервал в значения полей формы
-function valuesFromInterval(
-  from: string,
-  to: string,
-  timezone: string,
-): Pick<BookingForm, 'date' | 'startTime' | 'duration'> {
-  const start = new TZDate(new Date(from).getTime(), timezone);
-  const pad = (value: number) => String(value).padStart(2, '0');
-  const date = `${start.getFullYear()}-${pad(start.getMonth() + 1)}-${pad(start.getDate())}`;
-  const startTime = `${pad(start.getHours())}:${pad(start.getMinutes())}`;
-  const duration = (new Date(to).getTime() - new Date(from).getTime()) / 60_000;
-  return { date, startTime, duration };
-}
+// Пустая форма: интервал из расписания больше не подставляется
+const EMPTY_DEFAULTS: Pick<BookingForm, 'date' | 'startTime' | 'duration'> = {
+  date: '',
+  startTime: '',
+  duration: 60,
+};
 
 export interface CreateBookingModel {
   open: boolean;
-  // Интервал из URL для предзаполнения; null, если форма пустая
-  interval: { from: string; to: string } | null;
   summary: string | null;
   // Сервер вернул 409, показываем состояние конфликта
   conflict: boolean;
@@ -63,7 +45,6 @@ export interface CreateBookingModel {
   form: ReturnType<typeof useForm<BookingForm>>;
 }
 
-// Интервал приходит из URL (?from=&to=) от расписания комнаты и открывает модалку
 export function useCreateBooking(
   roomId: string | null,
   timezone: string,
@@ -71,15 +52,8 @@ export function useCreateBooking(
 ): CreateBookingModel {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const from = paramIso(searchParams, FROM_KEY);
-  const to = paramIso(searchParams, TO_KEY);
   const createOpen = searchParams.get(CREATE_KEY) === '1';
-  const open = ((from !== null && to !== null) || createOpen) && roomId !== null && timezone !== '';
-  const interval = open && from && to ? { from, to } : null;
-
-  const defaults = interval
-    ? valuesFromInterval(interval.from, interval.to, timezone)
-    : { date: '', startTime: '', duration: 60 };
+  const open = createOpen && roomId !== null && timezone !== '';
 
   const form = useForm<BookingForm>({
     resolver: zodResolver(createBookingSchema({ timezone })),
@@ -88,25 +62,10 @@ export function useCreateBooking(
       comment: '',
       repeat: 'none',
       occurrences: 4,
-      ...defaults,
+      ...EMPTY_DEFAULTS,
     },
     mode: 'onSubmit',
   });
-
-  // Форма стартует со значений интервала при его смене
-  const intervalKey = interval ? `${interval.from}|${interval.to}` : '';
-  useEffect(() => {
-    if (interval) {
-      form.reset({
-        title: '',
-        comment: '',
-        repeat: 'none',
-        occurrences: 4,
-        ...valuesFromInterval(interval.from, interval.to, timezone),
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [intervalKey]);
 
   const [createBooking, { isLoading }] = useCreateBookingMutation();
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
@@ -131,15 +90,13 @@ export function useCreateBooking(
 
   const clearOpenParams = () => {
     const next = new URLSearchParams(searchParams);
-    next.delete(FROM_KEY);
-    next.delete(TO_KEY);
     next.delete(CREATE_KEY);
     setSearchParams(next);
   };
 
   const close = () => {
     clearOpenParams();
-    form.reset({ title: '', comment: '', repeat: 'none', occurrences: 4, ...defaults });
+    form.reset({ title: '', comment: '', repeat: 'none', occurrences: 4, ...EMPTY_DEFAULTS });
   };
 
   const submit = async (values: BookingForm) => {
@@ -223,7 +180,6 @@ export function useCreateBooking(
 
   return {
     open,
-    interval,
     summary,
     conflict,
     isSubmitting: isLoading || progress !== null,
