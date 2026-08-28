@@ -175,7 +175,7 @@ function FormView({ model, subtitle, timezone }: CreateBookingDialogProps) {
                   <FormLabel className="text-lg font-bold text-blue-700">Время начала</FormLabel>
                   <Select value={field.value} onValueChange={field.onChange}>
                     <FormControl>
-                      <SelectTrigger className="h-auto w-full justify-start rounded-8 border-border px-14 py-10 text-xl data-[size=default]:h-auto [&>svg]:size-16 [&>svg]:opacity-100 *:data-[slot=select-value]:flex-1">
+                      <SelectTrigger className="h-auto w-full justify-start gap-3 rounded-8 border-border px-16 py-10 text-xl data-[size=default]:h-auto [&>svg]:size-16 [&>svg]:opacity-100 *:data-[slot=select-value]:flex-1">
                         <Clock className="size-16 shrink-0 text-blue-700" strokeWidth={2.5} />
                         <SelectValue placeholder="--:--" />
                       </SelectTrigger>
