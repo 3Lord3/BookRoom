@@ -8,10 +8,10 @@
 | Слой | Технология |
 |---|---|
 | Сборка | Vite + `@vitejs/plugin-react` |
-| UI | React 19 + TypeScript (strict) |
-| Роутинг | react-router v7 (library mode) |
-| Стейт | Redux Toolkit 2 + RTK Query (REST-кэш), listener middleware (WS) |
-| Стили | Tailwind CSS v4 + shadcn/ui, токены из макета |
+| UI | React 19 + TypeScript |
+| Роутинг | react-router v7 |
+| Стейт | Redux Toolkit + RTK Query (REST-кэш), listener middleware (WS) |
+| Стили | shadcn/ui, токены из макета |
 | Даты | date-fns v4 + `@date-fns/tz` |
 | Real-time | нативный WebSocket-клиент с автопереподключением |
 | Тесты | Vitest + Testing Library + MSW v2 |
@@ -55,24 +55,16 @@ curl -X POST http://localhost:3000/api/v1/test/reset
 
 - `app` — провайдеры (store, router, theme), AppShell, глобальные стили, роуты;
 - `pages` — rooms | room-detail | my-bookings | not-found;
-- `widgets` — navbar, day-schedule (сетка дня 09–20 с событиями), connection-banner;
+- `widgets` — navbar, day-schedule (сетка дня 09:00-20:00 с событиями), connection-banner;
 - `features` — select-office, filter-rooms, create-booking, cancel-booking, export-booking,
   real-time-sync;
 - `entities` — office, room, booking, viewer: типы, RTK Query эндпоинты, селекторы;
 - `shared` — ui (shadcn), api (baseApi), lib (dates/ws), config (env).
 
-### Особенности
-- Импорты идут только сверху вниз: слой может зависеть от нижележащего, но не от соседнего;
-- "Глупый" UI: интерфейс отделён от логики (запросы и обработчики в хуках);
-- Один хук на одну фичу;
-- Состояния представлены не в виде набора булевых флагов, а как дискриминированный union: (`{ status: 'loading' } | { status: 'error' } |
-   { status: 'success'; data }`).
-
 ## Ключевые решения
 
-1. Все расчёты и запросы к API в UTC (ISO-строки), а рабочие часы офиса показываются на экране в таймзоне офиса через библиотеку `@date-fns/tz`;
-2. Шаг 15 минут: одна константа `shared/config/schedule` (`TIME_STEP_MINUTES`) на всю
-   сетку расписания и форму бронирования;
+1. Все расчёты и запросы к API в UTC (ISO-строки), а рабочие часы офиса показываются на экране в таймзоне офиса относительно MSK через `@date-fns/tz`;
+2. Шаг 15 минут: одна константа на всю сетку расписания и форму бронирования;
 3. WS без подписок: сервер рассылает события всем и не хранит историю. Поэтому после
    переподключения данные повторно запрашиваются по REST, инвалидируя всё видимое на этот момент. Пропущенные за время обрыва события не восстанавливаются;
 4. Серверные данные живут в RTK Query. WebSocket только сообщает
@@ -85,7 +77,7 @@ curl -X POST http://localhost:3000/api/v1/test/reset
 
 - Unit чистых функций, unit кастомных хуков
 - Интеграционные тесты фич, сеть мокается через MSW
-- Рендер оборачивается в `<Provider>` с тестовым store (RTK Query не мокается руками)
+- Рендер оборачивается в `<Provider>` с тестовым store
 - Покрытие тестами ~90%
 
 ```bash
