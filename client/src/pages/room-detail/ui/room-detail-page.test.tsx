@@ -67,8 +67,8 @@ describe('RoomDetailPage', () => {
     );
     await renderRoomDetail(`/rooms/room-everest?date=${nextMondayIso()}`);
 
-    // Пока не пришёл /me, события скрыты целиком
-    expect(await screen.findByRole('button', { name: '14:00–14:15 свободно' })).toBeInTheDocument();
+    // Расписание загрузилось, но пока не пришёл /me, события скрыты целиком
+    expect(await screen.findByRole('button', { name: 'Забронировать комнату' })).toBeInTheDocument();
     expect(screen.queryByText('Планирование спринта')).not.toBeInTheDocument();
     expect(screen.queryByText('Занято')).not.toBeInTheDocument();
 
@@ -77,41 +77,13 @@ describe('RoomDetailPage', () => {
     expect(screen.getByText('Занято')).toBeInTheDocument();
   });
 
-  it('выбор свободного интервала активирует бронирование и пишет интервал в URL', async () => {
-    const user = await renderRoomDetail(`/rooms/room-everest?date=${nextMondayIso()}`);
-
-    // Кнопка доступна без выделенного интервала
-    const bookButton = await screen.findByRole('button', { name: 'Забронировать комнату' });
-    expect(bookButton).toBeEnabled();
-
-    const startCell = screen.getByRole('button', { name: '14:00–14:15 свободно' });
-    await user.click(startCell);
-
-    // Один клик даёт минимальный интервал
-    expect(bookButton).toBeEnabled();
-
-    // Второй клик позже расширяет выбор до 14:00–14:45
-    await user.click(screen.getByRole('button', { name: '14:30–14:45 свободно' }));
-    expect(screen.getByRole('button', { name: '14:15–14:30 свободно' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
-
-    await user.click(bookButton);
-
-    // 14:00–14:45 по Москве = 11:00Z–11:45Z (UTC+3)
-    const params = new URLSearchParams(window.location.search);
-    expect(params.get('from')).toBe(`${nextMondayIso()}T11:00:00.000Z`);
-    expect(params.get('to')).toBe(`${nextMondayIso()}T11:45:00.000Z`);
-  });
-
-  it('без выделенного интервала кнопка открывает пустую форму бронирования', async () => {
+  it('кнопка бронирования открывает пустую форму без интервала в URL', async () => {
     const user = await renderRoomDetail(`/rooms/room-everest?date=${nextMondayIso()}`);
 
     const bookButton = await screen.findByRole('button', { name: 'Забронировать комнату' });
     await user.click(bookButton);
 
-    // Модалка без интервала, сводки нет
+    // Модалка пустой формой, сводки нет
     expect(await screen.findByRole('heading', { name: 'Новое бронирование' })).toBeInTheDocument();
     expect(screen.queryByText(/Бронирование на /)).not.toBeInTheDocument();
 

@@ -1,15 +1,9 @@
 import { format, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { CalendarIcon, TriangleAlert } from 'lucide-react';
-import { useRef } from 'react';
 
-import {
-  TIME_STEP_MINUTES,
-  WORK_DAY_END_MINUTES,
-  WORK_DAY_START_MINUTES,
-} from '@shared/config/schedule';
+import { WORK_DAY_END_MINUTES, WORK_DAY_START_MINUTES } from '@shared/config/schedule';
 import { cn } from '@shared/lib/cn';
-import type { DaySlot, SlotRange } from '@shared/lib/slots';
 import { Button } from '@shared/ui/button';
 import { Calendar } from '@shared/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@shared/ui/popover';
@@ -48,7 +42,7 @@ export function DaySchedule({ roomId, timezone }: DayScheduleProps) {
       {model.content.status === 'error' && (
         <div className="flex flex-col items-center justify-center gap-24 py-80 text-center">
           <div className="flex size-120 items-center justify-center rounded-full bg-red-100 text-red-600 [&_svg]:size-48">
-            <TriangleAlert strokeWidth={2} />
+            <TriangleAlert strokeWidth={2.5} />
           </div>
           <div className="flex max-w-[420px] flex-col items-center gap-12">
             <h2 className="text-6xl font-extrabold">Не удалось загрузить расписание</h2>
@@ -77,7 +71,7 @@ export function DaySchedule({ roomId, timezone }: DayScheduleProps) {
                   type="button"
                   className="flex items-center gap-8 rounded-8 border border-border px-16 py-10 text-xl font-semibold"
                 >
-                  <CalendarIcon className="size-16 shrink-0 text-blue-700" strokeWidth={2} />
+                  <CalendarIcon className="size-16 shrink-0 text-blue-700" strokeWidth={2.5} />
                   Выбрать дату
                 </button>
               </PopoverTrigger>
@@ -99,7 +93,6 @@ export function DaySchedule({ roomId, timezone }: DayScheduleProps) {
           <Timeline content={model.content} />
 
           <footer className="flex items-center justify-end py-12">
-            {/* Без выбора открывает пустую форму бронирования */}
             <Button
               onClick={model.content.book}
               className="h-auto rounded-8 px-24 py-10 text-xl font-semibold"
@@ -117,27 +110,15 @@ function HourRow({ label }: { label: string }) {
   return (
     <div className="grid h-48 grid-cols-[60px_1fr]">
       <span className="self-start text-lg leading-none text-blue-400">{label}</span>
-      <div aria-hidden className="border border-border" />
+      {/* Разделитель не доходит до правого края, как в макете */}
+      <div aria-hidden className="mr-12 border-t border-border" />
     </div>
   );
 }
 
 function Timeline({ content }: { content: Extract<DayScheduleContent, { status: 'success' }> }) {
-  const selection = content.selection;
-  // Только флаг захвата; диапазон расширяет модель через onPress
-  const draggingRef = useRef(false);
-
-  const endDrag = () => {
-    draggingRef.current = false;
-  };
-
   return (
-    // Отпускание над колонкой часов тоже должно завершать перетаскивание
-    <div
-      className="relative flex flex-col select-none"
-      onPointerLeave={endDrag}
-      onPointerUp={endDrag}
-    >
+    <div className="relative flex flex-col">
       {HOUR_LABELS.map((label) => (
         <HourRow key={label} label={label} />
       ))}
@@ -146,65 +127,8 @@ function Timeline({ content }: { content: Extract<DayScheduleContent, { status: 
         {content.events.map((event) => (
           <EventBlock key={event.key} event={event} />
         ))}
-
-        {/* Интервал рисуем единым блоком, а не подсветкой ячеек */}
-        {selection && <SelectionBlock slots={content.slots} selection={selection} />}
-
-        {content.slots.map(
-          (slot, index) =>
-            !slot.busy && (
-              <button
-                key={slot.start}
-                type="button"
-                aria-label={`${slotTimeLabel(slot)} свободно`}
-                aria-pressed={
-                  selection !== null && index >= selection.startIndex && index <= selection.endIndex
-                }
-                onPointerDown={() => {
-                  draggingRef.current = true;
-                  content.onPress(index);
-                }}
-                onPointerEnter={() => {
-                  if (draggingRef.current) {
-                    content.onDragOver(index);
-                  }
-                }}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault();
-                    content.onPress(index);
-                  }
-                }}
-                style={{
-                  top: `${(slot.start - WORK_DAY_START_MINUTES) * PX_PER_MINUTE}px`,
-                  height: `${TIME_STEP_MINUTES * PX_PER_MINUTE}px`,
-                }}
-                // Внутри выбора слоты прозрачны, подсветку даёт SelectionBlock
-                className="absolute inset-x-0 cursor-pointer rounded-8 transition-colors hover:bg-teal-200/40"
-              />
-            ),
-        )}
       </div>
     </div>
-  );
-}
-
-// Непрерывный блок выбранного диапазона
-function SelectionBlock({ slots, selection }: { slots: DaySlot[]; selection: SlotRange }) {
-  const startSlot = slots[selection.startIndex];
-  const endSlot = slots[selection.endIndex];
-  if (!startSlot || !endSlot) {
-    return null;
-  }
-
-  return (
-    <div
-      style={{
-        top: `${(startSlot.start - WORK_DAY_START_MINUTES) * PX_PER_MINUTE}px`,
-        height: `${(endSlot.end - startSlot.start) * PX_PER_MINUTE}px`,
-      }}
-      className="absolute inset-x-0 rounded-8 border border-teal-700 bg-teal-200/60"
-    />
   );
 }
 
@@ -245,10 +169,4 @@ export function DayScheduleSkeleton() {
       </div>
     </>
   );
-}
-
-function slotTimeLabel(slot: { start: number; end: number }): string {
-  const pad = (value: number) => String(value).padStart(2, '0');
-  const toTime = (minutes: number) => `${pad(Math.floor(minutes / 60))}:${pad(minutes % 60)}`;
-  return `${toTime(slot.start)}–${toTime(slot.end)}`;
 }

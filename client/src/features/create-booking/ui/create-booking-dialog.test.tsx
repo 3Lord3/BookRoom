@@ -1,12 +1,17 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { format } from 'date-fns';
+import { ru } from 'date-fns/locale';
 import { http, HttpResponse } from 'msw';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { App } from '../../../app/app';
 import { errorHandlers } from '../../../mocks/handlers';
 import { server } from '../../../mocks/server';
 import { API_BASE_URL } from '../../../shared/config/env';
+
+// Интеграция с поповерами календаря и селектов медленная в общем прогоне
+vi.setConfig({ testTimeout: 20_000 });
 
 // Дата ближайшего понедельника, синхронно с фикстурами
 function nextMondayIso(): string {
@@ -19,26 +24,53 @@ function nextMondayIso(): string {
 
 async function renderDialog() {
   const monday = nextMondayIso();
-  // Интервал 14:00–15:00 по Москве (11:00Z–12:00Z)
-  window.history.replaceState(
-    {},
-    '',
-    `/rooms/room-everest?date=${monday}&from=${monday}T11:00:00.000Z&to=${monday}T12:00:00.000Z`,
-  );
+  window.history.replaceState({}, '', `/rooms/room-everest?date=${monday}&create=1`);
   render(<App />);
   const user = userEvent.setup();
   const title = await screen.findByRole('heading', { name: 'Новое бронирование' });
   return { user, title, monday };
 }
 
+// День в календаре доступен по aria-label в формате PPPP из ru-локали
+async function pickDate(user: ReturnType<typeof userEvent.setup>, date: string) {
+  const [year = 0, month = 0, day = 0] = date.split('-').map(Number);
+  const label = format(new Date(year, month - 1, day), 'PPPP', { locale: ru });
+
+  await user.click(screen.getByRole('button', { name: 'Дата' }));
+  for (let i = 0; i < 2 && !screen.queryByRole('button', { name: label }); i += 1) {
+    await user.click(screen.getByRole('button', { name: 'Go to the Next Month' }));
+  }
+  await user.click(screen.getByRole('button', { name: label }));
+}
+
+// Заполняет форму до валидного состояния: дата, время начала, длительность
+async function fillForm(
+  user: ReturnType<typeof userEvent.setup>,
+  monday: string,
+  options: { startTime?: string; duration?: string } = {},
+) {
+  await pickDate(user, monday);
+  await user.click(screen.getByRole('combobox', { name: 'Время начала' }));
+  await user.click(within(screen.getByRole('listbox')).getByText(options.startTime ?? '14:00'));
+  if (options.duration) {
+    await user.click(screen.getByRole('combobox', { name: 'Продолжительность' }));
+    await user.click(within(screen.getByRole('listbox')).getByText(options.duration));
+  }
+}
+
 describe('CreateBookingDialog', () => {
-  it('показывает форму с интервалом из URL и сводкой в таймзоне офиса', async () => {
-    const { title } = await renderDialog();
+  it('открывается пустой формой и после заполнения показывает сводку в таймзоне офиса', async () => {
+    const { user, title, monday } = await renderDialog();
 
     expect(title).toBeInTheDocument();
     expect(screen.getByText('Переговорная: Эверест (Офис Москва, 4 этаж)')).toBeInTheDocument();
-    // 11:00Z = 14:00 по Москве летом
     expect(screen.getByText('Тема встречи *')).toBeInTheDocument();
+    // Пока поля пустые, сводки нет
+    expect(screen.queryByText(/Бронирование на /)).not.toBeInTheDocument();
+
+    await fillForm(user, monday);
+
+    // 14:00 по Москве
     expect(screen.getByText(/Бронирование на Понедельник/)).toBeInTheDocument();
     expect(screen.getByText(/14:00 - 15:00 \(1 час\)/)).toBeInTheDocument();
   });
@@ -55,6 +87,7 @@ describe('CreateBookingDialog', () => {
     );
 
     await user.type(screen.getByLabelText('Тема встречи *'), 'Обсуждение плана');
+    await fillForm(user, monday);
     await user.click(screen.getByRole('button', { name: 'Забронировать' }));
 
     expect(await screen.findByText('Бронирование создано')).toBeInTheDocument();
@@ -66,20 +99,19 @@ describe('CreateBookingDialog', () => {
       endsAt: `${monday}T12:00:00.000Z`,
     });
 
-    // Модалка закрылась, интервал ушёл из URL
+    // Модалка закрылась, create ушёл из URL
     await waitFor(() =>
       expect(screen.queryByRole('heading', { name: 'Новое бронирование' })).not.toBeInTheDocument(),
     );
-    const params = new URLSearchParams(window.location.search);
-    expect(params.get('from')).toBeNull();
-    expect(params.get('to')).toBeNull();
+    expect(new URLSearchParams(window.location.search).get('create')).toBeNull();
   });
 
   it('при 409 показывает отдельное состояние конфликта', async () => {
-    const { user } = await renderDialog();
+    const { user, monday } = await renderDialog();
     server.use(errorHandlers.conflict);
 
     await user.type(screen.getByLabelText('Тема встречи *'), 'Конфликтная бронь');
+    await fillForm(user, monday);
     await user.click(screen.getByRole('button', { name: 'Забронировать' }));
 
     expect(await screen.findByText('Время уже занято')).toBeInTheDocument();
@@ -95,10 +127,11 @@ describe('CreateBookingDialog', () => {
   });
 
   it('при ошибке сервера (не 409) показывает тост с сообщением', async () => {
-    const { user } = await renderDialog();
+    const { user, monday } = await renderDialog();
     server.use(errorHandlers.submitError);
 
     await user.type(screen.getByLabelText('Тема встречи *'), 'Сбой брони');
+    await fillForm(user, monday);
     await user.click(screen.getByRole('button', { name: 'Забронировать' }));
 
     expect(await screen.findByText('Внутренняя ошибка сервера')).toBeInTheDocument();
@@ -107,28 +140,28 @@ describe('CreateBookingDialog', () => {
   });
 
   it('пустая тема показывает ошибку и не отправляет запрос', async () => {
-    const { user } = await renderDialog();
+    const { user, monday } = await renderDialog();
 
+    await fillForm(user, monday);
     await user.click(screen.getByRole('button', { name: 'Забронировать' }));
 
     expect(await screen.findByText('Обязательное поле')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Новое бронирование' })).toBeInTheDocument();
   });
 
-  it('кнопка «Отмена» закрывает модалку и убирает интервал из URL', async () => {
+  it('кнопка «Отмена» закрывает модалку и убирает create из URL', async () => {
     const { user } = await renderDialog();
 
     await user.click(screen.getByRole('button', { name: 'Отмена' }));
 
     expect(screen.queryByRole('heading', { name: 'Новое бронирование' })).not.toBeInTheDocument();
-    const params = new URLSearchParams(window.location.search);
-    expect(params.get('from')).toBeNull();
-    expect(params.get('to')).toBeNull();
+    expect(new URLSearchParams(window.location.search).get('create')).toBeNull();
   });
 
   it('сводка пересчитывается при смене длительности', async () => {
-    const { user } = await renderDialog();
+    const { user, monday } = await renderDialog();
 
+    await fillForm(user, monday);
     const summary = await screen.findByText(/Бронирование на /);
     expect(summary).toHaveTextContent('(1 час)');
 
@@ -139,7 +172,7 @@ describe('CreateBookingDialog', () => {
   });
 
   it('еженедельный повтор отправляет серию POST и закрывает модалку', async () => {
-    const { user } = await renderDialog();
+    const { user, monday } = await renderDialog();
 
     const sent: string[] = [];
     server.use(
@@ -153,6 +186,7 @@ describe('CreateBookingDialog', () => {
     );
 
     await user.type(screen.getByLabelText('Тема встречи *'), 'Еженедельный синк');
+    await fillForm(user, monday);
     await user.click(screen.getByRole('combobox', { name: 'Повторение' }));
     await user.click(within(screen.getByRole('listbox')).getByText('Каждую неделю'));
 
@@ -172,7 +206,7 @@ describe('CreateBookingDialog', () => {
   });
 
   it('при частичном сбое серии показывает сводный тост', async () => {
-    const { user } = await renderDialog();
+    const { user, monday } = await renderDialog();
 
     let calls = 0;
     server.use(
@@ -194,6 +228,7 @@ describe('CreateBookingDialog', () => {
     );
 
     await user.type(screen.getByLabelText('Тема встречи *'), 'Еженедельный синк');
+    await fillForm(user, monday);
     await user.click(screen.getByRole('combobox', { name: 'Повторение' }));
     await user.click(within(screen.getByRole('listbox')).getByText('Каждую неделю'));
 

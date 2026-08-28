@@ -1,4 +1,4 @@
-import { Building2, SearchX, TriangleAlert } from 'lucide-react';
+import { Building, SearchX, TriangleAlert } from 'lucide-react';
 
 import { RoomFilters } from '@features/filter-rooms';
 import { OfficeSelector } from '@features/select-office';
@@ -19,13 +19,13 @@ export function RoomsPage() {
         <OfficeSelector model={officeSelector} />
       </div>
       <div className="border-b border-border">
-        <RoomFilters model={filters} timezone={timezone} />
+        <RoomFilters model={filters} timezone={timezone} disabled={content.status === 'no-office'} />
       </div>
 
       {content.status === 'no-office' && (
         <StateBlock
           tone="teal"
-          icon={<Building2 strokeWidth={2} />}
+          icon={<Building strokeWidth={2.5} />}
           title="Выберите офис"
           subtitle="Для просмотра доступных переговорных сначала выберите офис из списка выше"
         />
@@ -34,7 +34,7 @@ export function RoomsPage() {
       {content.status === 'error' && (
         <StateBlock
           tone="red"
-          icon={<TriangleAlert strokeWidth={2} />}
+          icon={<TriangleAlert strokeWidth={2.5} />}
           title="Не удалось загрузить данные"
           subtitle="Произошла ошибка при загрузке списка переговорных"
           action={{ label: 'Попробовать снова', onClick: content.retry }}
@@ -44,7 +44,7 @@ export function RoomsPage() {
       {content.status === 'empty' && (
         <StateBlock
           tone="gray"
-          icon={<SearchX strokeWidth={2} />}
+          icon={<SearchX strokeWidth={2.5} />}
           title="Нет доступных переговорных"
           subtitle="Попробуйте изменить параметры фильтрации или выбрать другой офис"
           action={{ label: 'Сбросить фильтры', onClick: filters.reset }}

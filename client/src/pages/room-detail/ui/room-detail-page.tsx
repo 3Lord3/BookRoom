@@ -17,9 +17,9 @@ function BreadcrumbsSkeleton() {
   return (
     <div className="flex items-center gap-8 px-40 pt-24 pb-12">
       <Skeleton className={`h-18 w-[99px] rounded-4 ${BAR}`} />
-      <ChevronRight className="size-14 text-blue-400" strokeWidth={2} />
+      <ChevronRight className="size-14 text-blue-400" strokeWidth={2.5} />
       <Skeleton className={`h-18 w-[89px] rounded-4 ${BAR}`} />
-      <ChevronRight className="size-14 text-blue-400" strokeWidth={2} />
+      <ChevronRight className="size-14 text-blue-400" strokeWidth={2.5} />
       <Skeleton className={`h-18 w-[127px] rounded-4 ${BAR}`} />
     </div>
   );
@@ -70,7 +70,7 @@ export function RoomDetailPage() {
       <main className="mx-auto flex min-h-[calc(100dvh-72px)] w-full max-w-[1440px] grow flex-col">
         <StateBlock
           tone="red"
-          icon={<TriangleAlert strokeWidth={2} />}
+          icon={<TriangleAlert strokeWidth={2.5} />}
           title="Не удалось загрузить данные"
           subtitle={content.message}
           action={{ label: 'Попробовать снова', onClick: content.retry }}

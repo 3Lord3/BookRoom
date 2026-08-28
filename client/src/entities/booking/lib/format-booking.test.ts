@@ -25,9 +25,9 @@ describe('format-booking', () => {
     expect(bookingDay('2026-08-24T22:00:00.000Z', 'Europe/Moscow')).toBe(25);
   });
 
-  it('formatBookingTimeRange выводит время в таймзоне офиса с аббревиатурой', () => {
-    // Аббревиатура зависит от окружения (MSK / GMT+3), проверяем детерминированную часть
-    expect(formatBookingTimeRange(booking, 'Europe/Moscow')).toMatch(/^14:00 - 15:00 /);
+  it('formatBookingTimeRange выводит время в таймзоне офиса с поясом MSK', () => {
+    expect(formatBookingTimeRange(booking, 'Europe/Moscow')).toBe('14:00 - 15:00 MSK');
+    expect(formatBookingTimeRange(booking, 'Asia/Yekaterinburg')).toBe('16:00 - 17:00 MSK+2');
   });
 
   it('formatBookingFull выводит день недели, дату и время в таймзоне офиса', () => {

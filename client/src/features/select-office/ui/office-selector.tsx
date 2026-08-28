@@ -2,6 +2,7 @@ import { ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 
 import { cn } from '@shared/lib/cn';
+import { mskBelt } from '@shared/lib/msk-belt';
 import { Popover, PopoverContent, PopoverTrigger } from '@shared/ui/popover';
 import { Skeleton } from '@shared/ui/skeleton';
 
@@ -20,7 +21,7 @@ export function OfficeSelector({ model }: { model: OfficeSelectorModel }) {
             className="flex items-center gap-8 rounded-8 outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
           >
             <span className="text-4xl font-bold">{selected?.name ?? 'Выберите офис'}</span>
-            <ChevronDown className="size-16 text-muted-foreground" strokeWidth={2} />
+            <ChevronDown className="size-16 text-muted-foreground" strokeWidth={2.5} />
           </button>
         </PopoverTrigger>
         <PopoverContent align="start" className="w-max p-8">
@@ -48,7 +49,10 @@ export function OfficeSelector({ model }: { model: OfficeSelectorModel }) {
                 )}
               >
                 <span className="text-xl font-semibold">{office.name}</span>
-                <span className="text-lg text-blue-700">{office.address}</span>
+                <span className="flex w-full items-center justify-between gap-4 text-lg text-blue-700">
+                  <span>{office.address}</span>
+                  <span className="shrink-0">{mskBelt(office.timezone)}</span>
+                </span>
               </button>
             ))}
         </PopoverContent>

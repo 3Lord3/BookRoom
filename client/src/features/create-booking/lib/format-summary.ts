@@ -3,6 +3,7 @@ import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
 import type { Interval } from '@shared/lib/dates';
+import { mskBelt } from '@shared/lib/msk-belt';
 
 const pad = (value: number) => String(value).padStart(2, '0');
 
@@ -64,14 +65,6 @@ export function formatShortDate(iso: string, timezone: string): string {
   return format(zoned, 'd MMMM', { locale: ru });
 }
 
-function timezoneAbbr(iso: string, timezone: string): string {
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: timezone,
-    timeZoneName: 'short',
-  }).formatToParts(new Date(iso));
-  return parts.find((part) => part.type === 'timeZoneName')?.value ?? '';
-}
-
 export function formatToastDescription(
   roomName: string,
   interval: Interval,
@@ -80,7 +73,7 @@ export function formatToastDescription(
   const start = minutesLabel(interval.from, timezone);
   const end = minutesLabel(interval.to, timezone);
   const day = formatShortDate(interval.from, timezone);
-  return `Комната ${roomName}, ${day}, ${start}–${end} ${timezoneAbbr(interval.from, timezone)}`;
+  return `Комната ${roomName}, ${day}, ${start}–${end} ${mskBelt(timezone)}`;
 }
 
 export function formatOccurrences(count: number): string {

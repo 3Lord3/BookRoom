@@ -29,7 +29,7 @@ export function MyBookingsPage() {
         {model.content.status === 'error' && (
           <StateBlock
             tone="red"
-            icon={<TriangleAlert strokeWidth={2} />}
+            icon={<TriangleAlert strokeWidth={2.5} />}
             title="Не удалось загрузить данные"
             subtitle="Произошла ошибка при загрузке ваших бронирований"
             action={{ label: 'Попробовать снова', onClick: model.content.retry }}
@@ -39,7 +39,7 @@ export function MyBookingsPage() {
         {model.content.status === 'empty' && (
           <StateBlock
             tone="teal"
-            icon={<Calendar strokeWidth={2} />}
+            icon={<Calendar strokeWidth={2.5} />}
             title="Нет бронирований"
             subtitle={
               model.tab === 'upcoming'

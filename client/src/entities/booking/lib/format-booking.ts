@@ -3,6 +3,7 @@ import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
 import type { BookingView } from '@shared/api/dto';
+import { mskBelt } from '@shared/lib/msk-belt';
 
 const pad = (value: number) => String(value).padStart(2, '0');
 
@@ -16,14 +17,6 @@ function zonedTime(iso: string, timezone: string): { hours: number; minutes: num
 function minutesLabel(iso: string, timezone: string): string {
   const { hours, minutes } = zonedTime(iso, timezone);
   return `${pad(hours)}:${pad(minutes)}`;
-}
-
-function timezoneAbbr(iso: string, timezone: string): string {
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: timezone,
-    timeZoneName: 'short',
-  }).formatToParts(new Date(iso));
-  return parts.find((part) => part.type === 'timeZoneName')?.value ?? '';
 }
 
 // Месяц в именительном падеже: «Октябрь»
@@ -44,7 +37,7 @@ export function formatBookingTimeRange(
   return `${minutesLabel(booking.startsAt, timezone)} - ${minutesLabel(
     booking.endsAt,
     timezone,
-  )} ${timezoneAbbr(booking.startsAt, timezone)}`;
+  )} ${mskBelt(timezone)}`;
 }
 
 export function formatBookingFull(

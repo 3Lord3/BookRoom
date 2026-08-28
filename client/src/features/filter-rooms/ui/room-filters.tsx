@@ -39,7 +39,15 @@ function FilterItem({ label, children }: { label: string; children: React.ReactN
   );
 }
 
-function DateControl({ model, timezone }: { model: RoomFiltersModel; timezone: string | null }) {
+function DateControl({
+  model,
+  timezone,
+  disabled,
+}: {
+  model: RoomFiltersModel;
+  timezone: string | null;
+  disabled: boolean;
+}) {
   // Границы по строкам YYYY-MM-DD в таймзоне офиса, иначе сутки съезжают
   const minDate = timezone ? todayInTimezone(timezone) : null;
   const maxDate = minDate ? format(addDays(parseISO(minDate), MAX_AHEAD_DAYS), 'yyyy-MM-dd') : null;
@@ -47,8 +55,12 @@ function DateControl({ model, timezone }: { model: RoomFiltersModel; timezone: s
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button type="button" className={controlClass}>
-          <CalendarIcon className="size-16 shrink-0 text-blue-700" strokeWidth={2} />
+        <button
+          type="button"
+          disabled={disabled}
+          className={cn(controlClass, 'disabled:pointer-events-none')}
+        >
+          <CalendarIcon className="size-16 shrink-0 text-blue-700" strokeWidth={2.5} />
           <span>{model.date ? formatDateLabel(model.date) : 'Выберите дату'}</span>
         </button>
       </PopoverTrigger>
@@ -72,7 +84,7 @@ function DateControl({ model, timezone }: { model: RoomFiltersModel; timezone: s
   );
 }
 
-function TimeControl({ model }: { model: RoomFiltersModel }) {
+function TimeControl({ model, disabled }: { model: RoomFiltersModel; disabled: boolean }) {
   // Черновик локальный; при внешней смене времени контрол пересоздаётся через key
   const [draft, setDraft] = useState(model.time ?? '');
 
@@ -88,14 +100,15 @@ function TimeControl({ model }: { model: RoomFiltersModel }) {
 
   return (
     <div className={controlClass}>
-      <Clock className="size-16 shrink-0 text-blue-700" strokeWidth={2} />
+      <Clock className="size-16 shrink-0 text-blue-700" strokeWidth={2.5} />
       <Input
         value={draft}
         onChange={(event) => setDraft(applyTimeMask(event.target.value))}
         onBlur={commit}
         placeholder="--:--"
         inputMode="numeric"
-        className="h-auto w-40 border-none px-0 py-0 text-xl shadow-none focus-visible:ring-0 md:text-xl"
+        disabled={disabled}
+        className="h-auto w-40 border-none px-0 py-0 text-xl shadow-none focus-visible:ring-0 disabled:opacity-100 md:text-xl"
       />
     </div>
   );
@@ -104,18 +117,24 @@ function TimeControl({ model }: { model: RoomFiltersModel }) {
 export function RoomFilters({
   model,
   timezone,
+  disabled = false,
 }: {
   model: RoomFiltersModel;
   timezone: string | null;
+  // До выбора офиса фильтры неактивны (макет: полупрозрачная полоса)
+  disabled?: boolean;
 }) {
   return (
-    <section aria-label="Фильтры переговорных" className="flex items-center gap-16 px-40 py-20">
+    <section
+      aria-label="Фильтры переговорных"
+      className={cn('flex items-center gap-16 px-40 py-20', disabled && 'opacity-40')}
+    >
       <FilterItem label="Дата">
-        <DateControl model={model} timezone={timezone} />
+        <DateControl model={model} timezone={timezone} disabled={disabled} />
       </FilterItem>
 
       <FilterItem label="Время начала">
-        <TimeControl key={model.time ?? ''} model={model} />
+        <TimeControl key={model.time ?? ''} model={model} disabled={disabled} />
       </FilterItem>
 
       <FilterItem label="Длительность">
@@ -124,10 +143,11 @@ export function RoomFilters({
           onValueChange={(value) => model.setDuration(Number(value))}
         >
           <SelectTrigger
+            disabled={disabled}
             className={cn(
               controlClass,
-              // База shadcn задаёт высоту по data-size, выравниваем с кнопками фильтров
-              'data-[size=default]:h-auto [&>svg]:size-16 [&>svg]:opacity-100',
+              // База shadcn затемняет disabled, но полосу уже глушит общий opacity
+              'disabled:opacity-100 data-[size=default]:h-auto [&>svg]:size-16 [&>svg]:opacity-100',
             )}
           >
             <SelectValue />
@@ -150,20 +170,23 @@ export function RoomFilters({
           onValueChange={(value) => model.setCapacity(value === '' ? null : Number(value))}
         >
           <SelectTrigger
+            disabled={disabled}
             className={cn(
               controlClass,
-              // База shadcn задаёт высоту по data-size, выравниваем с кнопками фильтров
-              'data-[size=default]:h-auto [&>svg]:size-16 [&>svg]:opacity-100',
+              // База shadcn затемняет disabled, но полосу уже глушит общий opacity
+              'disabled:opacity-100 data-[size=default]:h-auto [&>svg]:size-16 [&>svg]:opacity-100',
             )}
           >
-            <Users className="size-16 shrink-0 text-blue-700" strokeWidth={2} />
-            <SelectValue placeholder="Не указано" />
+            <Users className="size-16 shrink-0 text-blue-700" strokeWidth={2.5} />
+            <SelectValue placeholder="Не указано">
+              {model.capacity === null ? null : `Мин. ${model.capacity} чел.`}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent position="popper">
             <SelectGroup>
               {CAPACITY_OPTIONS.map((capacity) => (
                 <SelectItem key={capacity} value={String(capacity)}>
-                  Мин. {capacity} чел.
+                  {capacity} чел.
                 </SelectItem>
               ))}
             </SelectGroup>

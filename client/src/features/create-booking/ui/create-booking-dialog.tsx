@@ -9,7 +9,7 @@ import {
   WORK_DAY_START_MINUTES,
 } from '@shared/config/schedule';
 import { cn } from '@shared/lib/cn';
-import { todayInTimezone } from '@shared/lib/dates';
+import { formatDateWithShortWeekday, todayInTimezone } from '@shared/lib/dates';
 import { Button } from '@shared/ui/button';
 import { Calendar } from '@shared/ui/calendar';
 import {
@@ -20,7 +20,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@shared/ui/dialog';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@shared/ui/form';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  useFormField,
+} from '@shared/ui/form';
 import { Input } from '@shared/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@shared/ui/popover';
 import {
@@ -34,8 +42,6 @@ import {
 import { Textarea } from '@shared/ui/textarea';
 
 import type { CreateBookingModel } from '../model/use-create-booking';
-
-const capitalize = (value: string) => value.replace(/\p{L}/u, (letter) => letter.toUpperCase());
 
 // Время начала шагом 15 минут из рабочих часов
 const START_TIME_OPTIONS = Array.from(
@@ -99,7 +105,10 @@ export function CreateBookingDialog({ model, subtitle, timezone }: CreateBooking
     <Dialog open={model.open} onOpenChange={(open) => !open && model.close()}>
       <DialogContent
         showCloseButton={false}
-        className="w-[560px] max-w-[calc(100vw-32px)] gap-0 rounded-20 bg-card p-32 shadow-1 sm:max-w-[560px]"
+        className={cn(
+          'max-w-[calc(100vw-32px)] gap-0 rounded-20 bg-card p-32 shadow-1',
+          model.conflict ? 'w-[480px] sm:max-w-[480px]' : 'w-[560px] sm:max-w-[560px]',
+        )}
       >
         {model.conflict ? (
           <ConflictView model={model} />
@@ -136,7 +145,7 @@ function FormView({ model, subtitle, timezone }: CreateBookingDialogProps) {
                 <FormControl>
                   <Input
                     placeholder="Например: Daily Sync"
-                    className="h-auto rounded-8 border-border px-14 py-10 text-xl shadow-none"
+                    className="h-auto rounded-8 border-border px-14 py-10 text-xl shadow-none aria-invalid:border-red-400 aria-invalid:ring-red-400/20 md:text-xl"
                     {...field}
                   />
                 </FormControl>
@@ -166,8 +175,8 @@ function FormView({ model, subtitle, timezone }: CreateBookingDialogProps) {
                   <FormLabel className="text-lg font-bold text-blue-700">Время начала</FormLabel>
                   <Select value={field.value} onValueChange={field.onChange}>
                     <FormControl>
-                      <SelectTrigger className="h-auto w-full justify-start rounded-8 border-border px-14 py-10 text-xl data-[size=default]:h-auto [&>svg]:size-16 [&>svg]:opacity-100 *:data-[slot=select-value]:flex-1">
-                        <Clock className="size-16 shrink-0 text-blue-700" strokeWidth={2} />
+                      <SelectTrigger className="h-auto w-full justify-start gap-3 rounded-8 border-border px-16 py-10 text-xl data-[size=default]:h-auto [&>svg]:size-16 [&>svg]:opacity-100 *:data-[slot=select-value]:flex-1">
+                        <Clock className="size-16 shrink-0 text-blue-700" strokeWidth={2.5} />
                         <SelectValue placeholder="--:--" />
                       </SelectTrigger>
                     </FormControl>
@@ -286,7 +295,7 @@ function FormView({ model, subtitle, timezone }: CreateBookingDialogProps) {
                 <FormControl>
                   <Textarea
                     placeholder="Дополнительная информация для участников встречи..."
-                    className="min-h-80 rounded-8 border-border px-14 py-10 text-xl shadow-none"
+                    className="min-h-80 rounded-8 border-border px-14 py-10 text-xl shadow-none md:text-xl"
                     {...field}
                   />
                 </FormControl>
@@ -298,7 +307,7 @@ function FormView({ model, subtitle, timezone }: CreateBookingDialogProps) {
 
         {model.summary && (
           <div className="mt-24 flex items-center gap-8 rounded-8 bg-teal-200 px-14 py-14 text-lg font-semibold text-teal-800">
-            <Info className="size-16 shrink-0 text-teal-800" strokeWidth={2} />
+            <Info className="size-16 shrink-0 text-teal-800" strokeWidth={2.5} />
             <span>{model.summary}</span>
           </div>
         )}
@@ -308,7 +317,7 @@ function FormView({ model, subtitle, timezone }: CreateBookingDialogProps) {
             type="button"
             variant="outline"
             onClick={model.close}
-            className="h-auto rounded-8 px-20 py-10 text-xl font-semibold"
+            className="h-auto rounded-8 bg-transparent px-20 py-10 text-xl font-semibold text-blue-700 hover:bg-transparent"
           >
             Отмена
           </Button>
@@ -339,6 +348,7 @@ function DateField({
   };
   timezone: string;
 }) {
+  const { error } = useFormField();
   const selected = field.value ? parseISO(field.value) : undefined;
   const minDate = todayInTimezone(timezone);
   const maxDate = format(addDays(parseISO(minDate), MAX_AHEAD_DAYS), 'yyyy-MM-dd');
@@ -349,12 +359,19 @@ function DateField({
         <FormControl>
           <button
             type="button"
-            className="flex h-auto w-full items-center gap-8 rounded-8 border border-input px-14 py-10 text-xl"
+            aria-invalid={!!error}
+            className={cn(
+              'flex h-auto w-full items-center gap-8 rounded-8 border border-input px-14 py-10 text-xl md:text-xl',
+              error && 'border-red-400',
+            )}
           >
-            <CalendarIcon className="size-16 shrink-0 text-blue-700" strokeWidth={2} />
+            <CalendarIcon
+              className={cn('size-16 shrink-0', error ? 'text-red-400' : 'text-blue-700')}
+              strokeWidth={2.5}
+            />
             <span className={cn(!field.value && 'text-blue-400')}>
               {field.value
-                ? capitalize(format(selected as Date, 'd MMMM, EEEE', { locale: ru }))
+                ? formatDateWithShortWeekday(selected as Date)
                 : 'Выберите дату'}
             </span>
           </button>
@@ -379,20 +396,20 @@ function DateField({
 function ConflictView({ model }: { model: CreateBookingModel }) {
   return (
     <div className="flex flex-col items-center gap-24 text-center">
-      <div className="flex size-64 items-center justify-center rounded-full bg-red-100 text-red-600 [&_svg]:size-32">
-        <TriangleAlert strokeWidth={2} />
-      </div>
-
-      <DialogHeader className="items-center gap-12 text-center">
+      <DialogHeader className="items-center gap-12 text-center sm:text-center">
+        <div className="flex size-[64px] items-center justify-center rounded-full bg-red-100 text-red-600 [&_svg]:size-32">
+          <TriangleAlert strokeWidth={2} />
+        </div>
         <DialogTitle className="text-6xl font-extrabold text-foreground">
           Время уже занято
         </DialogTitle>
-        <DialogDescription className="max-w-[416px] text-2xl text-blue-700">
-          Выбранный интервал был забронирован другим сотрудником. Расписание обновлено.
-        </DialogDescription>
       </DialogHeader>
 
-      <DialogFooter className="mt-24 w-full">
+      <DialogDescription className="max-w-[416px] text-2xl text-blue-700">
+        Выбранный интервал был забронирован другим сотрудником. Расписание обновлено.
+      </DialogDescription>
+
+      <DialogFooter className="w-full">
         <Button
           type="button"
           onClick={model.resolveConflict}

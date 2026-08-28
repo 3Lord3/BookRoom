@@ -15,11 +15,11 @@
 | Даты | date-fns v4 + `@date-fns/tz` |
 | Real-time | нативный WebSocket-клиент с автопереподключением |
 | Тесты | Vitest + Testing Library + MSW v2 |
-| Пакеты | pnpm |
+| Пакеты | npm |
 
 ## Запуск
 
-Требуется Node.js 20+ и pnpm.
+Требуется Node.js 20+ и npm.
 
 ### 1. Backend (`server/`)
 
@@ -36,9 +36,9 @@ npm run dev
 
 ```bash
 cd client
-pnpm install
+npm install
 cp .env.example .env.local   # VITE_API_URL, по умолчанию http://localhost:3000
-pnpm dev
+npm run dev
 ```
 
 Приложение открывается на `http://localhost:5173`.
@@ -55,11 +55,11 @@ curl -X POST http://localhost:3000/api/v1/test/reset
 
 - `app` — провайдеры (store, router, theme), AppShell, глобальные стили, роуты;
 - `pages` — rooms | room-detail | my-bookings | not-found;
-- `widgets` — navbar, day-schedule (сетка дня 09–20 со слотами), connection-banner;
+- `widgets` — navbar, day-schedule (сетка дня 09–20 с событиями), connection-banner;
 - `features` — select-office, filter-rooms, create-booking, cancel-booking, export-booking,
   real-time-sync;
 - `entities` — office, room, booking, viewer: типы, RTK Query эндпоинты, селекторы;
-- `shared` — ui (shadcn), api (baseApi), lib (dates/slots/ws), config (env).
+- `shared` — ui (shadcn), api (baseApi), lib (dates/ws), config (env).
 
 ### Особенности
 - Импорты идут только сверху вниз: слой может зависеть от нижележащего, но не от соседнего;
@@ -90,9 +90,9 @@ curl -X POST http://localhost:3000/api/v1/test/reset
 
 ```bash
 cd client
-pnpm test          # Vitest, один прогон
-pnpm test:watch    # watch-режим
-pnpm lint          # ESLint (включая порядок импортов)
-pnpm typecheck     # tsc -b
-pnpm build         # сборка production
+npm test             # Vitest, один прогон
+npm run test:watch   # watch-режим
+npm run lint         # ESLint (включая порядок импортов)
+npm run typecheck    # tsc -b
+npm run build        # сборка production
 ```

@@ -15,7 +15,7 @@ export function ConnectionBanner() {
       role="status"
       className="flex items-center justify-center gap-12 border-b border-yellow-400 bg-yellow-300 px-32 py-10"
     >
-      <TriangleAlert className="size-18 shrink-0 text-orange-800" strokeWidth={2} />
+      <TriangleAlert className="size-18 shrink-0 text-orange-800" strokeWidth={2.5} />
       <span className="text-xl font-semibold text-orange-800">
         Соединение потеряно. Переподключение...
       </span>
