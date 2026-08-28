@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 
@@ -50,7 +50,44 @@ describe('RoomsPage', () => {
 
     expect(await screen.findByText('Недоступно на выбранное время')).toBeInTheDocument();
     expect(screen.getByText('Доступно на выбранное время')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Забронировать' })).toBeDisabled();
+    const everestCard = screen.getByText('Эверест').closest('article') as HTMLElement;
+    expect(within(everestCard).getByRole('button', { name: 'Забронировать' })).toBeDisabled();
+  });
+
+  it('забронировать на доступном интервале открывает модалку со значениями из фильтров', async () => {
+    const monday = nextMondayIso();
+    const user = await renderRooms(
+      `/rooms?office=office-moscow&date=${monday}&time=14:00&duration=60`,
+    );
+
+    const kazbekCard = (await screen.findByText('Казбек')).closest('article') as HTMLElement;
+    await user.click(within(kazbekCard).getByRole('button', { name: 'Забронировать' }));
+
+    expect(await screen.findByRole('heading', { name: 'Новое бронирование' })).toBeInTheDocument();
+    // Сводка собрана из подставленных фильтров: 14:00–15:00 по таймзоне офиса
+    expect(screen.getByText(/14:00 - 15:00 \(1 час\)/)).toBeInTheDocument();
+
+    const params = new URLSearchParams(window.location.search);
+    expect(params.get('create')).toBe('1');
+    expect(params.get('booking')).toBe('room-kazbek');
+  });
+
+  it('отмена модалки из списка закрывает её без ошибок', async () => {
+    const monday = nextMondayIso();
+    const user = await renderRooms(
+      `/rooms?office=office-moscow&date=${monday}&time=14:00&duration=60`,
+    );
+
+    const kazbekCard = (await screen.findByText('Казбек')).closest('article') as HTMLElement;
+    await user.click(within(kazbekCard).getByRole('button', { name: 'Забронировать' }));
+    expect(await screen.findByRole('heading', { name: 'Новое бронирование' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Отмена' }));
+
+    await waitFor(() =>
+      expect(screen.queryByRole('heading', { name: 'Новое бронирование' })).not.toBeInTheDocument(),
+    );
+    expect(new URLSearchParams(window.location.search).get('booking')).toBeNull();
   });
 
   it('пустой результат показывает сброс фильтров', async () => {

@@ -22,7 +22,13 @@ function AvailabilityBar({ available }: { available: boolean }) {
   );
 }
 
-export function RoomCard({ room }: { room: RoomSummary }) {
+export function RoomCard({
+  room,
+  onBook,
+}: {
+  room: RoomSummary;
+  onBook: (room: RoomSummary) => void;
+}) {
   const location = useLocation();
   // Расписание на детальной странице откроется с текущими фильтрами
   const detailUrl = `/rooms/${room.id}${location.search}`;
@@ -54,14 +60,18 @@ export function RoomCard({ room }: { room: RoomSummary }) {
         {room.available === false ? (
           // Кнопка только визуально заблокирована, на бронирование не ведёт
           <Button
-            className="h-auto flex-1 rounded-8 px-16 py-10 text-xl font-semibold opacity-60"
+            className="h-auto flex-1 rounded-8 bg-blue-100 px-16 py-10 text-xl font-semibold text-blue-400 disabled:opacity-60"
             disabled
           >
             Забронировать
           </Button>
         ) : (
-          <Button asChild className="h-auto flex-1 rounded-8 px-16 py-10 text-xl font-semibold">
-            <Link to={detailUrl}>Забронировать</Link>
+          <Button
+            type="button"
+            onClick={() => onBook(room)}
+            className="h-auto flex-1 rounded-8 px-16 py-10 text-xl font-semibold"
+          >
+            Забронировать
           </Button>
         )}
       </div>

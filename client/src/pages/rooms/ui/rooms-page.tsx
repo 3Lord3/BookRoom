@@ -1,5 +1,6 @@
 import { Building, SearchX, TriangleAlert } from 'lucide-react';
 
+import { CreateBookingDialog } from '@features/create-booking';
 import { RoomFilters } from '@features/filter-rooms';
 import { OfficeSelector } from '@features/select-office';
 import { StateBlock } from '@shared/ui/state-block';
@@ -11,7 +12,7 @@ import { useRoomsPage } from '../model/use-rooms-page';
 const SKELETON_COUNT = 6;
 
 export function RoomsPage() {
-  const { officeSelector, filters, timezone, content } = useRoomsPage();
+  const { officeSelector, filters, timezone, content, booking } = useRoomsPage();
 
   return (
     <main className="mx-auto flex min-h-[calc(100dvh-72px)] w-full max-w-[1440px] grow flex-col">
@@ -19,7 +20,11 @@ export function RoomsPage() {
         <OfficeSelector model={officeSelector} />
       </div>
       <div className="border-b border-border">
-        <RoomFilters model={filters} timezone={timezone} disabled={content.status === 'no-office'} />
+        <RoomFilters
+          model={filters}
+          timezone={timezone}
+          disabled={content.status === 'no-office'}
+        />
       </div>
 
       {content.status === 'no-office' && (
@@ -63,10 +68,18 @@ export function RoomsPage() {
               ? Array.from({ length: SKELETON_COUNT }, (_, index) => (
                   <RoomCardSkeleton key={index} />
                 ))
-              : content.rooms.map((room) => <RoomCard key={room.id} room={room} />)}
+              : content.rooms.map((room) => (
+                  <RoomCard key={room.id} room={room} onBook={booking.book} />
+                ))}
           </div>
         </section>
       )}
+
+      <CreateBookingDialog
+        model={booking.model}
+        subtitle={booking.subtitle}
+        timezone={booking.timezone}
+      />
     </main>
   );
 }

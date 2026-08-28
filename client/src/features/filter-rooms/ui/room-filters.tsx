@@ -108,7 +108,7 @@ function TimeControl({ model, disabled }: { model: RoomFiltersModel; disabled: b
         placeholder="--:--"
         inputMode="numeric"
         disabled={disabled}
-        className="h-auto w-40 border-none px-0 py-0 text-xl shadow-none focus-visible:ring-0 disabled:opacity-100 md:text-xl"
+        className="h-auto w-40 rounded-none border-none px-0 py-0 text-xl shadow-none focus-visible:ring-0 disabled:opacity-100 md:text-xl"
       />
     </div>
   );
