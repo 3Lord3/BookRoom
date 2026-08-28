@@ -80,8 +80,9 @@ export function formatOccurrences(count: number): string {
   return `${count} ${pluralRu(count, 'встреча', 'встречи', 'встреч')}`;
 }
 
-export function formatRecurrence(count: number): string {
-  return `${formatOccurrences(count)} еженедельно`;
+// Короткий вид для инфо-плашки: без варианта повтора, чтобы не растягивать строку
+export function formatOccurrenceCount(count: number): string {
+  return `${count} ${pluralRu(count, 'раз', 'раза', 'раз')}`;
 }
 
 export function formatSeriesToastDescription(

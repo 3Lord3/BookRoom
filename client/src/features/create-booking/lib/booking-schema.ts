@@ -9,7 +9,7 @@ import {
 } from '@shared/config/schedule';
 import { buildInterval } from '@shared/lib/dates';
 
-import { buildOccurrenceSeries } from './recurrence';
+import { buildOccurrenceSeries, type Recurrence } from './recurrence';
 
 // Значения полей формы до расчёта UTC-интервала
 export interface BookingFormValues {
@@ -18,7 +18,7 @@ export interface BookingFormValues {
   startTime: string;
   duration: number;
   comment: string;
-  repeat: 'none' | 'weekly';
+  repeat: 'none' | Recurrence;
   occurrences: number;
 }
 
@@ -49,12 +49,9 @@ export function createBookingSchema(context: BookingSchemaContext) {
         ),
       duration: z.number().int().min(TIME_STEP_MINUTES, 'Минимум 15 минут'),
       comment: z.string().trim().max(2_000).optional(),
-      repeat: z.enum(['none', 'weekly']),
-      occurrences: z
-        .number()
-        .int()
-        .min(2, 'Минимум 2 встречи')
-        .max(8, 'Максимум 8 встреч'),
+      repeat: z.enum(['none', 'daily', 'weekdays', 'weekly']),
+      // Верхний предел не задаём: реально серию режет горизонт +30 дней ниже
+      occurrences: z.number().int().min(2, 'Минимум 2 встречи'),
     })
     .superRefine((values, ctx) => {
       if (values.duration % TIME_STEP_MINUTES !== 0) {
@@ -102,9 +99,23 @@ export function createBookingSchema(context: BookingSchemaContext) {
         });
       }
 
+      // У «по будням» первое вхождение — сама выбранная дата, поэтому она обязана быть будним днём
+      if (values.repeat === 'weekdays' && (start.getDay() === 0 || start.getDay() === 6)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['date'],
+          message: 'Дата должна быть будним днём',
+        });
+      }
+
       // Последнее вхождение серии не должно выходить за горизонт +30 дней
-      if (values.repeat === 'weekly' && values.occurrences > 1) {
-        const last = buildOccurrenceSeries(interval, values.occurrences).at(-1);
+      if (values.repeat !== 'none' && values.occurrences > 1) {
+        const last = buildOccurrenceSeries(
+          interval,
+          values.occurrences,
+          values.repeat,
+          timezone,
+        ).at(-1);
         if (last && new Date(last.from).getTime() - now.getTime() > MAX_ADVANCE_MS) {
           ctx.addIssue({
             code: 'custom',

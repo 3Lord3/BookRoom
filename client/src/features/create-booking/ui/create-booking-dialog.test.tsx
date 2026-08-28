@@ -1,9 +1,10 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { format } from 'date-fns';
+import { addDays, format, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { http, HttpResponse } from 'msw';
-import { describe, expect, it, vi } from 'vitest';
+import { toast } from 'sonner';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { App } from '../../../app/app';
 import { errorHandlers } from '../../../mocks/handlers';
@@ -12,6 +13,11 @@ import { API_BASE_URL } from '../../../shared/config/env';
 
 // Интеграция с поповерами календаря и селектов медленная в общем прогоне
 vi.setConfig({ testTimeout: 20_000 });
+
+// Тосты живут в глобальном store sonner и переживают размонтирование App между тестами
+beforeEach(() => {
+  toast.dismiss();
+});
 
 // Дата ближайшего понедельника, синхронно с фикстурами
 function nextMondayIso(): string {
@@ -179,9 +185,12 @@ describe('CreateBookingDialog', () => {
       http.post(`${API_BASE_URL}/bookings`, async ({ request }) => {
         const body = (await request.json()) as { startsAt: string };
         sent.push(body.startsAt);
-        return HttpResponse.json({ id: `booking-${sent.length}`, roomId: 'room-everest' }, {
-          status: 201,
-        });
+        return HttpResponse.json(
+          { id: `booking-${sent.length}`, roomId: 'room-everest' },
+          {
+            status: 201,
+          },
+        );
       }),
     );
 
@@ -199,6 +208,44 @@ describe('CreateBookingDialog', () => {
     // Следующее вхождение серии на неделю позже
     const weekMs = 7 * 24 * 60 * 60 * 1000;
     expect(new Date(sent[1]!).getTime() - new Date(sent[0]!).getTime()).toBe(weekMs);
+
+    await waitFor(() =>
+      expect(screen.queryByRole('heading', { name: 'Новое бронирование' })).not.toBeInTheDocument(),
+    );
+  });
+
+  it('повтор «по будням» отправляет серию будних дней', async () => {
+    const { user, monday } = await renderDialog();
+
+    const sent: string[] = [];
+    server.use(
+      http.post(`${API_BASE_URL}/bookings`, async ({ request }) => {
+        const body = (await request.json()) as { startsAt: string };
+        sent.push(body.startsAt);
+        return HttpResponse.json(
+          { id: `booking-${sent.length}`, roomId: 'room-everest' },
+          {
+            status: 201,
+          },
+        );
+      }),
+    );
+
+    await user.type(screen.getByLabelText('Тема встречи *'), 'Ежедневный синк');
+    await fillForm(user, monday);
+    await user.click(screen.getByRole('combobox', { name: 'Повторение' }));
+    await user.click(within(screen.getByRole('listbox')).getByText('По будням'));
+
+    await user.click(screen.getByRole('button', { name: 'Забронировать' }));
+
+    expect(await screen.findByText(/^4 встречи · Комната Эверест/)).toBeInTheDocument();
+    await waitFor(() => expect(sent).toHaveLength(4));
+
+    // 4 будних дня подряд с понедельника, 14:00 по Москве
+    const expected = [0, 1, 2, 3].map(
+      (days) => `${format(addDays(parseISO(monday), days), 'yyyy-MM-dd')}T11:00:00.000Z`,
+    );
+    expect(sent).toEqual(expected);
 
     await waitFor(() =>
       expect(screen.queryByRole('heading', { name: 'Новое бронирование' })).not.toBeInTheDocument(),
@@ -223,7 +270,10 @@ describe('CreateBookingDialog', () => {
             { status: 409 },
           );
         }
-        return HttpResponse.json({ id: `booking-${calls}`, roomId: 'room-everest' }, { status: 201 });
+        return HttpResponse.json(
+          { id: `booking-${calls}`, roomId: 'room-everest' },
+          { status: 201 },
+        );
       }),
     );
 
