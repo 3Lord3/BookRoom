@@ -52,7 +52,7 @@ export function BookingCard({ booking, onCancel }: BookingCardProps) {
             type="button"
             variant="outline"
             onClick={() => onCancel(booking)}
-            className="h-auto shrink-0 rounded-8 border-red-400 px-16 py-10 text-xl font-semibold text-red-400 hover:bg-red-100/50 hover:text-red-600"
+            className="h-auto shrink-0 rounded-8 border-red-400 bg-transparent px-16 py-10 text-xl font-semibold text-red-400 shadow-none hover:bg-red-100/50 hover:text-red-600"
           >
             Отменить
           </Button>
