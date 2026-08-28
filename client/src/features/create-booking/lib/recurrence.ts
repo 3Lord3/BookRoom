@@ -1,17 +1,42 @@
+import { TZDate } from '@date-fns/tz';
+
 import type { Interval } from '@shared/lib/dates';
 
-const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+// Варианты повтора серии; у weekdays вхождения только в будни
+export type Recurrence = 'daily' | 'weekdays' | 'weekly';
 
-// Серия из count интервалов с шагом в неделю; арифметика в UTC-мгновениях,
-// поэтому сдвиг не зависит от таймзон
-export function buildOccurrenceSeries(base: Interval, count: number): Interval[] {
-  const from = new Date(base.from).getTime();
-  const to = new Date(base.to).getTime();
-  return Array.from({ length: count }, (_, index) => {
-    const offset = index * WEEK_MS;
-    return {
-      from: new Date(from + offset).toISOString(),
-      to: new Date(to + offset).toISOString(),
-    };
-  });
+const WEEKEND_DAYS = new Set([0, 6]);
+
+// Сдвиг в календарных днях таймзоны офиса, а не +24 UTC-часа: при переходе на
+// летнее время фиксированный сдвиг в мгновениях сместил бы встречу на час
+function stepInTimezone(from: number, timezone: string, stepDays: number): number {
+  const zoned = new TZDate(from, timezone);
+  zoned.setDate(zoned.getDate() + stepDays);
+  return zoned.getTime();
+}
+
+export function buildOccurrenceSeries(
+  base: Interval,
+  count: number,
+  recurrence: Recurrence,
+  timezone: string,
+): Interval[] {
+  if (count < 1) {
+    return [];
+  }
+  const fromMs = new Date(base.from).getTime();
+  const durationMs = new Date(base.to).getTime() - fromMs;
+  const result: Interval[] = [base];
+  let cursor = fromMs;
+  while (result.length < count) {
+    cursor = stepInTimezone(cursor, timezone, recurrence === 'weekly' ? 7 : 1);
+    if (recurrence === 'weekdays' && WEEKEND_DAYS.has(new TZDate(cursor, timezone).getDay())) {
+      continue;
+    }
+    result.push({
+      from: new Date(cursor).toISOString(),
+      to: new Date(cursor + durationMs).toISOString(),
+    });
+  }
+  return result;
 }

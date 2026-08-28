@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  formatOccurrenceCount,
   formatOccurrences,
-  formatRecurrence,
   formatSeriesToastDescription,
   formatShortDate,
   formatSummary,
@@ -47,8 +47,10 @@ describe('форматтеры серии', () => {
     expect(formatOccurrences(5)).toBe('5 встреч');
   });
 
-  it('formatRecurrence дополняет количество словом «еженедельно»', () => {
-    expect(formatRecurrence(4)).toBe('4 встречи еженедельно');
+  it('formatOccurrenceCount даёт короткий счётчик «раз» для инфо-плашки', () => {
+    expect(formatOccurrenceCount(1)).toBe('1 раз');
+    expect(formatOccurrenceCount(4)).toBe('4 раза');
+    expect(formatOccurrenceCount(5)).toBe('5 раз');
   });
 
   it('formatSeriesToastDescription ведёт описание от первого вхождения серии', () => {

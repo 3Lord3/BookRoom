@@ -89,13 +89,10 @@ describe('createBookingSchema', () => {
     }
   });
 
-  it('отклоняет количество вхождений больше 8', () => {
-    const result = schema().safeParse({ ...valid, repeat: 'weekly', occurrences: 9 });
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      const issue = result.error.issues.find((item) => item.path[0] === 'occurrences');
-      expect(issue?.message).toBe('Максимум 8 встреч');
-    }
+  it('принимает количество вхождений больше 8, если серия влезает в горизонт', () => {
+    // 24.08 + 8 дней = 01.09, в пределах +30 дней
+    const result = schema().safeParse({ ...valid, repeat: 'daily', occurrences: 9 });
+    expect(result.success).toBe(true);
   });
 
   it('отклоняет серию, последнее вхождение которой выходит за +30 дней', () => {
@@ -111,5 +108,44 @@ describe('createBookingSchema', () => {
   it('принимает серию, укладывающуюся в +30 дней', () => {
     const result = schema().safeParse({ ...valid, repeat: 'weekly', occurrences: 5 });
     expect(result.success).toBe(true);
+  });
+
+  it('принимает ежедневный повтор', () => {
+    const result = schema().safeParse({ ...valid, repeat: 'daily', occurrences: 4 });
+    expect(result.success).toBe(true);
+  });
+
+  it('принимает повтор по будням с будней датой начала', () => {
+    const result = schema().safeParse({ ...valid, repeat: 'weekdays', occurrences: 4 });
+    expect(result.success).toBe(true);
+  });
+
+  it('отклоняет повтор по будням, если дата начала выпадает на выходной', () => {
+    const result = schema().safeParse({
+      ...valid,
+      date: '2026-08-29',
+      repeat: 'weekdays',
+      occurrences: 4,
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const issue = result.error.issues.find((item) => item.path[0] === 'date');
+      expect(issue?.message).toBe('Дата должна быть будним днём');
+    }
+  });
+
+  it('отклоняет ежедневную серию, последнее вхождение которой выходит за +30 дней', () => {
+    // 22.09 + 7 дней = 29.09, дальше горизонта (23.09)
+    const result = schema().safeParse({
+      ...valid,
+      date: '2026-09-22',
+      repeat: 'daily',
+      occurrences: 8,
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const issue = result.error.issues.find((item) => item.path[0] === 'occurrences');
+      expect(issue?.message).toBe('Повторы не должны выходить за 30 дней вперёд');
+    }
   });
 });

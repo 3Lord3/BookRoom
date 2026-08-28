@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { useDispatch } from 'react-redux';
 import { useSearchParams } from 'react-router-dom';
@@ -13,7 +13,7 @@ import { buildInterval } from '@shared/lib/dates';
 
 import { createBookingSchema, type BookingForm } from '../lib/booking-schema';
 import {
-  formatRecurrence,
+  formatOccurrenceCount,
   formatSeriesToastDescription,
   formatSummary,
   formatToastDescription,
@@ -29,6 +29,11 @@ const EMPTY_DEFAULTS: Pick<BookingForm, 'date' | 'startTime' | 'duration'> = {
   startTime: '',
   duration: 60,
 };
+
+export interface CreateBookingOptions {
+  // Интервал, подставляемый в форму при открытии (фильтры списка комнат)
+  initial?: Pick<BookingForm, 'date' | 'startTime' | 'duration'>;
+}
 
 export interface CreateBookingModel {
   open: boolean;
@@ -49,6 +54,7 @@ export function useCreateBooking(
   roomId: string | null,
   timezone: string,
   roomName: string,
+  options: CreateBookingOptions = {},
 ): CreateBookingModel {
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -62,10 +68,28 @@ export function useCreateBooking(
       comment: '',
       repeat: 'none',
       occurrences: 4,
-      ...EMPTY_DEFAULTS,
+      ...(options.initial ?? EMPTY_DEFAULTS),
     },
     mode: 'onSubmit',
   });
+
+  // Фильтры могли измениться после монтирования: при каждом открытии берём текущий интервал
+  const initialRef = useRef(options.initial);
+  useEffect(() => {
+    initialRef.current = options.initial;
+  });
+
+  useEffect(() => {
+    if (open) {
+      form.reset({
+        title: '',
+        comment: '',
+        repeat: 'none',
+        occurrences: 4,
+        ...(initialRef.current ?? EMPTY_DEFAULTS),
+      });
+    }
+  }, [open, roomId, form]);
 
   const [createBooking, { isLoading }] = useCreateBookingMutation();
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
@@ -83,8 +107,8 @@ export function useCreateBooking(
       timezone,
     );
     summary =
-      watched.repeat === 'weekly' && watched.occurrences
-        ? `${base} · ${formatRecurrence(watched.occurrences)}`
+      watched.repeat && watched.repeat !== 'none' && watched.occurrences
+        ? `${base} · ${formatOccurrenceCount(watched.occurrences)}`
         : base;
   }
 
@@ -104,13 +128,16 @@ export function useCreateBooking(
       return;
     }
     const built = buildInterval(values.date, values.startTime, values.duration, timezone);
-    const count = values.repeat === 'weekly' ? values.occurrences : 1;
     // У одиночной брони отдельное состояние конфликта, у серии сводный итог
-    if (count === 1) {
+    if (values.repeat === 'none') {
       await submitSingle(roomId, built, values);
       return;
     }
-    await submitSeries(roomId, buildOccurrenceSeries(built, count), values);
+    await submitSeries(
+      roomId,
+      buildOccurrenceSeries(built, values.occurrences, values.repeat, timezone),
+      values,
+    );
   };
 
   const bookingBody = (

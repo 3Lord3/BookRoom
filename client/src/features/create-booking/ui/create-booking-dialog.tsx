@@ -53,14 +53,14 @@ const START_TIME_OPTIONS = Array.from(
   },
 );
 
+// Верхняя граница списков выбора: без неё длинный список тянется на всю доступную высоту
+const SELECT_LIST_MAX_HEIGHT = 'max-h-[240px]';
+
 // Опции покрывают весь рабочий день: любая длительность из диапазона должна быть в поле
 const DURATION_OPTIONS = Array.from(
   { length: (WORK_DAY_END_MINUTES - WORK_DAY_START_MINUTES) / TIME_STEP_MINUTES },
   (_, index) => (index + 1) * TIME_STEP_MINUTES,
 );
-
-// Горизонт +30 дней ограничивает повторы 8 вхождениями
-const OCCURRENCE_OPTIONS = [2, 3, 4, 5, 6, 7, 8];
 
 function pluralRu(count: number, one: string, few: string, many: string): string {
   const mod10 = count % 10;
@@ -180,7 +180,7 @@ function FormView({ model, subtitle, timezone }: CreateBookingDialogProps) {
                         <SelectValue placeholder="--:--" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent position="popper" className="max-h-80">
+                    <SelectContent position="popper" className={SELECT_LIST_MAX_HEIGHT}>
                       <SelectGroup>
                         {START_TIME_OPTIONS.map((time) => (
                           <SelectItem key={time} value={time}>
@@ -211,7 +211,7 @@ function FormView({ model, subtitle, timezone }: CreateBookingDialogProps) {
                       <SelectValue />
                     </SelectTrigger>
                   </FormControl>
-                  <SelectContent position="popper">
+                  <SelectContent position="popper" className={SELECT_LIST_MAX_HEIGHT}>
                     <SelectGroup>
                       {DURATION_OPTIONS.map((minutes) => (
                         <SelectItem key={minutes} value={String(minutes)}>
@@ -242,6 +242,8 @@ function FormView({ model, subtitle, timezone }: CreateBookingDialogProps) {
                     <SelectContent position="popper">
                       <SelectGroup>
                         <SelectItem value="none">Не повторять</SelectItem>
+                        <SelectItem value="daily">Каждый день</SelectItem>
+                        <SelectItem value="weekdays">По будням</SelectItem>
                         <SelectItem value="weekly">Каждую неделю</SelectItem>
                       </SelectGroup>
                     </SelectContent>
@@ -251,34 +253,25 @@ function FormView({ model, subtitle, timezone }: CreateBookingDialogProps) {
               )}
             />
 
-            {watched.repeat === 'weekly' && (
+            {watched.repeat !== 'none' && (
               <FormField
                 control={model.form.control}
                 name="occurrences"
                 render={({ field }) => (
                   <FormItem className="flex-1">
                     <FormLabel className="text-lg font-bold text-blue-700">
-                      Количество встреч
+                      Количество повторений
                     </FormLabel>
-                    <Select
-                      value={String(field.value)}
-                      onValueChange={(value) => field.onChange(Number(value))}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="h-auto w-full rounded-8 border-border px-14 py-10 text-xl data-[size=default]:h-auto [&>svg]:size-16 [&>svg]:opacity-100">
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent position="popper">
-                        <SelectGroup>
-                          {OCCURRENCE_OPTIONS.map((count) => (
-                            <SelectItem key={count} value={String(count)}>
-                              {count} {pluralRu(count, 'встреча', 'встречи', 'встреч')}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={2}
+                        step={1}
+                        className="h-auto rounded-8 border-border px-14 py-10 text-xl shadow-none aria-invalid:border-red-400 aria-invalid:ring-red-400/20 md:text-xl"
+                        {...field}
+                        onChange={(event) => field.onChange(Number(event.target.value))}
+                      />
+                    </FormControl>
                     <FormMessage className="text-base font-semibold text-red-400" />
                   </FormItem>
                 )}
@@ -350,8 +343,9 @@ function DateField({
 }) {
   const { error } = useFormField();
   const selected = field.value ? parseISO(field.value) : undefined;
-  const minDate = todayInTimezone(timezone);
-  const maxDate = format(addDays(parseISO(minDate), MAX_AHEAD_DAYS), 'yyyy-MM-dd');
+  // Таймзона может опустеть в кадре закрытия модалки: не строим границы календаря
+  const minDate = timezone ? todayInTimezone(timezone) : null;
+  const maxDate = minDate ? format(addDays(parseISO(minDate), MAX_AHEAD_DAYS), 'yyyy-MM-dd') : null;
 
   return (
     <Popover>
@@ -370,9 +364,7 @@ function DateField({
               strokeWidth={2.5}
             />
             <span className={cn(!field.value && 'text-blue-400')}>
-              {field.value
-                ? formatDateWithShortWeekday(selected as Date)
-                : 'Выберите дату'}
+              {field.value ? formatDateWithShortWeekday(selected as Date) : 'Выберите дату'}
             </span>
           </button>
         </FormControl>
@@ -383,10 +375,14 @@ function DateField({
           locale={ru}
           selected={selected}
           onSelect={(day) => day && field.onChange(format(day, 'yyyy-MM-dd'))}
-          disabled={(day) => {
-            const value = format(day, 'yyyy-MM-dd');
-            return value < minDate || value > maxDate;
-          }}
+          disabled={
+            minDate && maxDate
+              ? (day) => {
+                  const value = format(day, 'yyyy-MM-dd');
+                  return value < minDate || value > maxDate;
+                }
+              : true
+          }
         />
       </PopoverContent>
     </Popover>
