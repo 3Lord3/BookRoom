@@ -34,10 +34,9 @@ describe('formatShortDate', () => {
 });
 
 describe('formatToastDescription', () => {
-  it('складывает описание тоста: комната, дата и время в таймзоне офиса', () => {
-    // Аббревиатура зависит от окружения (MSK / GMT+3), проверяем детерминированную часть
-    expect(formatToastDescription('Эверест', { from: FROM, to: TO }, TZ)).toMatch(
-      /^Комната Эверест, 24 августа, 10:00–11:00 /,
+  it('складывает описание тоста: комната, дата и время с поясом MSK', () => {
+    expect(formatToastDescription('Эверест', { from: FROM, to: TO }, TZ)).toBe(
+      'Комната Эверест, 24 августа, 10:00–11:00 MSK',
     );
   });
 });
@@ -57,8 +56,8 @@ describe('форматтеры серии', () => {
       { from: FROM, to: TO },
       { from: '2026-08-31T07:00:00.000Z', to: '2026-08-31T08:00:00.000Z' },
     ];
-    expect(formatSeriesToastDescription('Эверест', series, TZ)).toMatch(
-      /^2 встречи · Комната Эверест, 24 августа, 10:00–11:00 /,
+    expect(formatSeriesToastDescription('Эверест', series, TZ)).toBe(
+      '2 встречи · Комната Эверест, 24 августа, 10:00–11:00 MSK',
     );
   });
 });
