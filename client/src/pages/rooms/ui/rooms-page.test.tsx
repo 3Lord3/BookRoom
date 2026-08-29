@@ -90,6 +90,47 @@ describe('RoomsPage', () => {
     expect(new URLSearchParams(window.location.search).get('booking')).toBeNull();
   });
 
+  it('ссылка с booking и create открывает модалку после загрузки списка', async () => {
+    await renderRooms('/rooms?office=office-moscow&booking=room-kazbek&create=1');
+
+    // Пока список грузится, параметры трогать нельзя: комнаты ещё нет в данных
+    expect(await screen.findByRole('heading', { name: 'Новое бронирование' })).toBeInTheDocument();
+    const params = new URLSearchParams(window.location.search);
+    expect(params.get('booking')).toBe('room-kazbek');
+    expect(params.get('create')).toBe('1');
+  });
+
+  it('несуществующая комната в ссылке убирает booking и create из URL', async () => {
+    await renderRooms('/rooms?office=office-moscow&booking=room-gone&create=1');
+
+    expect(await screen.findByText('Эверест')).toBeInTheDocument();
+    // Иначе оба параметра остаются в URL навсегда и уезжают по ссылке «Подробнее»
+    await waitFor(() => {
+      const params = new URLSearchParams(window.location.search);
+      expect(params.get('booking')).toBeNull();
+      expect(params.get('create')).toBeNull();
+    });
+    expect(screen.queryByRole('heading', { name: 'Новое бронирование' })).not.toBeInTheDocument();
+  });
+
+  it('одинокий create в ссылке не уезжает на страницу комнаты', async () => {
+    const user = await renderRooms('/rooms?office=office-moscow&create=1');
+
+    expect(await screen.findByText('Эверест')).toBeInTheDocument();
+    await waitFor(() =>
+      expect(new URLSearchParams(window.location.search).get('create')).toBeNull(),
+    );
+
+    // Страница комнаты открывает модалку по одному create=1: параметр не должен
+    // уехать туда по ссылке «Подробнее» и открыть бронирование невыбранной комнаты
+    const everestCard = screen.getByText('Эверест').closest('article') as HTMLElement;
+    await user.click(within(everestCard).getByRole('link', { name: 'Подробнее' }));
+
+    expect(await screen.findByRole('heading', { name: 'Эверест' })).toBeInTheDocument();
+    expect(new URLSearchParams(window.location.search).get('create')).toBeNull();
+    expect(screen.queryByRole('heading', { name: 'Новое бронирование' })).not.toBeInTheDocument();
+  });
+
   it('пустой результат показывает сброс фильтров', async () => {
     const user = await renderRooms('/rooms?office=office-saint-petersburg&capacity=12');
 

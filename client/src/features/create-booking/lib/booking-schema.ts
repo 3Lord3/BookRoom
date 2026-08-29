@@ -3,12 +3,15 @@ import { z } from 'zod';
 
 import {
   MAX_AHEAD_DAYS,
+  MAX_OCCURRENCES,
+  MIN_OCCURRENCES,
   TIME_STEP_MINUTES,
   WORK_DAY_END_MINUTES,
   WORK_DAY_START_MINUTES,
 } from '@shared/config/schedule';
 import { buildInterval } from '@shared/lib/dates';
 
+import { formatOccurrences } from './format-summary';
 import { buildOccurrenceSeries, type Recurrence } from './recurrence';
 
 // Значения полей формы до расчёта UTC-интервала
@@ -29,6 +32,21 @@ export interface BookingSchemaContext {
 
 const timePattern = /^([01]\d|2[0-3]):[0-5]\d$/;
 
+// Причина, по которой длина серии не подходит; null — длина в порядке.
+// Верхний предел идёт первым: он же ловит Infinity из поля ввода
+export function occurrencesIssue(value: number): string | null {
+  if (value > MAX_OCCURRENCES) {
+    return `Максимум ${formatOccurrences(MAX_OCCURRENCES)} в серии`;
+  }
+  if (!Number.isInteger(value)) {
+    return 'Введите целое число повторений';
+  }
+  if (value < MIN_OCCURRENCES) {
+    return `Минимум ${formatOccurrences(MIN_OCCURRENCES)}`;
+  }
+  return null;
+}
+
 // Зеркалит правила бэкенда (server/src/services/booking-rules.ts); таймзона и «сейчас»
 // впрыскиваются для детерминированной проверки
 export function createBookingSchema(context: BookingSchemaContext) {
@@ -47,13 +65,24 @@ export function createBookingSchema(context: BookingSchemaContext) {
           (value) => Number(value.slice(3)) % TIME_STEP_MINUTES === 0,
           `Время должно быть кратно ${TIME_STEP_MINUTES} минутам`,
         ),
-      duration: z.number().int().min(TIME_STEP_MINUTES, 'Минимум 15 минут'),
+      duration: z.number().int().min(TIME_STEP_MINUTES, `Минимум ${TIME_STEP_MINUTES} минут`),
       comment: z.string().trim().max(2_000).optional(),
       repeat: z.enum(['none', 'daily', 'weekdays', 'weekly']),
-      // Верхний предел не задаём: реально серию режет горизонт +30 дней ниже
-      occurrences: z.number().int().min(2, 'Минимум 2 встречи'),
+      // Пропускаем любое число, включая NaN и Infinity из поля ввода: z.number()
+      // отверг бы их английским сообщением, а на скрытом поле его негде показать
+      occurrences: z.custom<number>(
+        (value) => typeof value === 'number',
+        'Укажите количество повторений',
+      ),
     })
     .superRefine((values, ctx) => {
+      // Длину серии проверяем первой и только при активном повторе: при 'none' поле
+      // скрыто, и его ошибка молча заблокировала бы отправку формы
+      const badOccurrences = values.repeat === 'none' ? null : occurrencesIssue(values.occurrences);
+      if (badOccurrences) {
+        ctx.addIssue({ code: 'custom', path: ['occurrences'], message: badOccurrences });
+      }
+
       if (values.duration % TIME_STEP_MINUTES !== 0) {
         return;
       }
@@ -108,8 +137,9 @@ export function createBookingSchema(context: BookingSchemaContext) {
         });
       }
 
-      // Последнее вхождение серии не должно выходить за горизонт +30 дней
-      if (values.repeat !== 'none' && values.occurrences > 1) {
+      // Последнее вхождение серии не должно выходить за горизонт +30 дней;
+      // строим её только для длины в пределах MAX_OCCURRENCES
+      if (values.repeat !== 'none' && badOccurrences === null) {
         const last = buildOccurrenceSeries(
           interval,
           values.occurrences,

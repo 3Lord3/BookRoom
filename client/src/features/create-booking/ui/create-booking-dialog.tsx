@@ -4,6 +4,8 @@ import { CalendarIcon, Clock, Info, TriangleAlert } from 'lucide-react';
 
 import {
   MAX_AHEAD_DAYS,
+  MAX_OCCURRENCES,
+  MIN_OCCURRENCES,
   TIME_STEP_MINUTES,
   WORK_DAY_END_MINUTES,
   WORK_DAY_START_MINUTES,
@@ -43,7 +45,7 @@ import { Textarea } from '@shared/ui/textarea';
 
 import type { CreateBookingModel } from '../model/use-create-booking';
 
-// Время начала шагом 15 минут из рабочих часов
+// Время начала шагом сетки из рабочих часов
 const START_TIME_OPTIONS = Array.from(
   { length: (WORK_DAY_END_MINUTES - WORK_DAY_START_MINUTES) / TIME_STEP_MINUTES },
   (_, index) => {
@@ -125,7 +127,11 @@ function FormView({ model, subtitle, timezone }: CreateBookingDialogProps) {
 
   return (
     <Form {...model.form}>
-      <form onSubmit={model.form.handleSubmit(model.submit)} className="flex flex-col gap-0">
+      <form
+        noValidate
+        onSubmit={model.form.handleSubmit(model.submit)}
+        className="flex flex-col gap-0"
+      >
         <DialogHeader className="gap-4 text-left">
           <DialogTitle className="text-6xl font-extrabold text-foreground">
             Новое бронирование
@@ -175,7 +181,7 @@ function FormView({ model, subtitle, timezone }: CreateBookingDialogProps) {
                   <FormLabel className="text-lg font-bold text-blue-700">Время начала</FormLabel>
                   <Select value={field.value} onValueChange={field.onChange}>
                     <FormControl>
-                      <SelectTrigger className="h-auto w-full justify-start gap-3 rounded-8 border-border px-16 py-10 text-xl data-[size=default]:h-auto [&>svg]:size-16 [&>svg]:opacity-100 *:data-[slot=select-value]:flex-1">
+                      <SelectTrigger className="h-auto w-full justify-start gap-3 rounded-8 border-border px-16 py-10 text-xl aria-invalid:border-red-400 aria-invalid:ring-red-400/20 data-[size=default]:h-auto [&>svg]:size-16 [&>svg]:opacity-100 *:data-[slot=select-value]:flex-1">
                         <Clock className="size-16 shrink-0 text-blue-700" strokeWidth={2.5} />
                         <SelectValue placeholder="--:--" />
                       </SelectTrigger>
@@ -207,7 +213,7 @@ function FormView({ model, subtitle, timezone }: CreateBookingDialogProps) {
                   onValueChange={(value) => field.onChange(Number(value))}
                 >
                   <FormControl>
-                    <SelectTrigger className="h-auto w-full rounded-8 border-border px-14 py-10 text-xl data-[size=default]:h-auto [&>svg]:size-16 [&>svg]:opacity-100">
+                    <SelectTrigger className="h-auto w-full rounded-8 border-border px-14 py-10 text-xl aria-invalid:border-red-400 aria-invalid:ring-red-400/20 data-[size=default]:h-auto [&>svg]:size-16 [&>svg]:opacity-100">
                       <SelectValue />
                     </SelectTrigger>
                   </FormControl>
@@ -226,7 +232,9 @@ function FormView({ model, subtitle, timezone }: CreateBookingDialogProps) {
             )}
           />
 
-          <div className="flex flex-row items-end gap-16">
+          {/* items-start, как в ряду «Дата»: иначе сообщение об ошибке растит блок
+              вверх и поле подпрыгивает */}
+          <div className="flex flex-row items-start gap-16">
             <FormField
               control={model.form.control}
               name="repeat"
@@ -235,7 +243,7 @@ function FormView({ model, subtitle, timezone }: CreateBookingDialogProps) {
                   <FormLabel className="text-lg font-bold text-blue-700">Повторение</FormLabel>
                   <Select value={field.value} onValueChange={field.onChange}>
                     <FormControl>
-                      <SelectTrigger className="h-auto w-full rounded-8 border-border px-14 py-10 text-xl data-[size=default]:h-auto [&>svg]:size-16 [&>svg]:opacity-100">
+                      <SelectTrigger className="h-auto w-full rounded-8 border-border px-14 py-10 text-xl aria-invalid:border-red-400 aria-invalid:ring-red-400/20 data-[size=default]:h-auto [&>svg]:size-16 [&>svg]:opacity-100">
                         <SelectValue />
                       </SelectTrigger>
                     </FormControl>
@@ -265,7 +273,8 @@ function FormView({ model, subtitle, timezone }: CreateBookingDialogProps) {
                     <FormControl>
                       <Input
                         type="number"
-                        min={2}
+                        min={MIN_OCCURRENCES}
+                        max={MAX_OCCURRENCES}
                         step={1}
                         className="h-auto rounded-8 border-border px-14 py-10 text-xl shadow-none aria-invalid:border-red-400 aria-invalid:ring-red-400/20 md:text-xl"
                         {...field}

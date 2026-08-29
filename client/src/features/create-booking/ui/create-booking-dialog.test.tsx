@@ -127,9 +127,12 @@ describe('CreateBookingDialog', () => {
       ),
     ).toBeInTheDocument();
 
+    // Возврат на форму: модалка остаётся открытой, введённые значения сохраняются
     await user.click(screen.getByRole('button', { name: 'Выбрать другое время' }));
     expect(screen.queryByText('Время уже занято')).not.toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Новое бронирование' })).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Новое бронирование' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Тема встречи *')).toHaveValue('Конфликтная бронь');
+    expect(new URLSearchParams(window.location.search).get('create')).toBe('1');
   });
 
   it('при ошибке сервера (не 409) показывает тост с сообщением', async () => {
@@ -177,6 +180,92 @@ describe('CreateBookingDialog', () => {
     expect(await screen.findByText(/Бронирование на /)).toHaveTextContent('(30 мин)');
   });
 
+  it('возврат к «Не повторять» после очистки счётчика не блокирует отправку', async () => {
+    const { user, monday } = await renderDialog();
+
+    const sentBody: Record<string, unknown>[] = [];
+    server.use(
+      http.post(`${API_BASE_URL}/bookings`, async ({ request }) => {
+        sentBody.push((await request.json()) as Record<string, unknown>);
+        return HttpResponse.json({ id: 'booking-new', roomId: 'room-everest' }, { status: 201 });
+      }),
+    );
+
+    await user.type(screen.getByLabelText('Тема встречи *'), 'Разовая встреча');
+    await fillForm(user, monday);
+
+    await user.click(screen.getByRole('combobox', { name: 'Повторение' }));
+    await user.click(within(screen.getByRole('listbox')).getByText('Каждый день'));
+    await user.clear(screen.getByLabelText('Количество повторений'));
+    await user.click(screen.getByRole('combobox', { name: 'Повторение' }));
+    await user.click(within(screen.getByRole('listbox')).getByText('Не повторять'));
+
+    await user.click(screen.getByRole('button', { name: 'Забронировать' }));
+
+    // Скрытое поле не должно держать форму на ошибке, которую негде показать
+    expect(await screen.findByText('Бронирование создано')).toBeInTheDocument();
+    expect(sentBody).toHaveLength(1);
+  });
+
+  it('слишком длинная серия показывает наше сообщение и не уходит на сервер', async () => {
+    const { user, monday } = await renderDialog();
+
+    let posts = 0;
+    server.use(
+      http.post(`${API_BASE_URL}/bookings`, async () => {
+        posts += 1;
+        return HttpResponse.json({ id: 'booking-new', roomId: 'room-everest' }, { status: 201 });
+      }),
+    );
+
+    await user.type(screen.getByLabelText('Тема встречи *'), 'Длинная серия');
+    await fillForm(user, monday);
+    await user.click(screen.getByRole('combobox', { name: 'Повторение' }));
+    await user.click(within(screen.getByRole('listbox')).getByText('Каждый день'));
+
+    await user.clear(screen.getByLabelText('Количество повторений'));
+    await user.type(screen.getByLabelText('Количество повторений'), '100');
+    await user.click(screen.getByRole('button', { name: 'Забронировать' }));
+
+    // Нативный баббл number-инпута перехватил бы submit и наше сообщение не показал
+    expect(await screen.findByText('Максимум 31 встреча в серии')).toBeInTheDocument();
+    expect(posts).toBe(0);
+  });
+
+  it('плашка не показывает длину серии, которую отвергает схема', async () => {
+    const { user, monday } = await renderDialog();
+
+    await fillForm(user, monday);
+    await user.click(screen.getByRole('combobox', { name: 'Повторение' }));
+    await user.click(within(screen.getByRole('listbox')).getByText('Каждый день'));
+
+    expect(await screen.findByText(/Бронирование на /)).toHaveTextContent('· 4 раза');
+
+    await user.clear(screen.getByLabelText('Количество повторений'));
+    await user.type(screen.getByLabelText('Количество повторений'), '999');
+
+    // Иначе плашка обещает «999 раз» рядом с ошибкой «Максимум 31 встреча в серии»
+    expect(screen.getByText(/Бронирование на /)).not.toHaveTextContent('раз');
+  });
+
+  it('смена повтора туда-обратно сохраняет введённое количество', async () => {
+    const { user, monday } = await renderDialog();
+
+    await fillForm(user, monday);
+    await user.click(screen.getByRole('combobox', { name: 'Повторение' }));
+    await user.click(within(screen.getByRole('listbox')).getByText('Каждый день'));
+
+    await user.clear(screen.getByLabelText('Количество повторений'));
+    await user.type(screen.getByLabelText('Количество повторений'), '3');
+
+    await user.click(screen.getByRole('combobox', { name: 'Повторение' }));
+    await user.click(within(screen.getByRole('listbox')).getByText('Не повторять'));
+    await user.click(screen.getByRole('combobox', { name: 'Повторение' }));
+    await user.click(within(screen.getByRole('listbox')).getByText('Каждый день'));
+
+    expect(screen.getByLabelText('Количество повторений')).toHaveValue(3);
+  });
+
   it('еженедельный повтор отправляет серию POST и закрывает модалку', async () => {
     const { user, monday } = await renderDialog();
 
@@ -202,7 +291,7 @@ describe('CreateBookingDialog', () => {
     await user.click(screen.getByRole('button', { name: 'Забронировать' }));
 
     // Заголовок тоста совпадает с одиночным созданием, проверяем уникальное описание серии
-    expect(await screen.findByText(/^4 встречи · Комната Эверест/)).toBeInTheDocument();
+    expect(await screen.findByText(/^4 встречи еженедельно · Комната Эверест/)).toBeInTheDocument();
     await waitFor(() => expect(sent).toHaveLength(4));
 
     // Следующее вхождение серии на неделю позже
@@ -238,7 +327,7 @@ describe('CreateBookingDialog', () => {
 
     await user.click(screen.getByRole('button', { name: 'Забронировать' }));
 
-    expect(await screen.findByText(/^4 встречи · Комната Эверест/)).toBeInTheDocument();
+    expect(await screen.findByText(/^4 встречи по будням · Комната Эверест/)).toBeInTheDocument();
     await waitFor(() => expect(sent).toHaveLength(4));
 
     // 4 будних дня подряд с понедельника, 14:00 по Москве
