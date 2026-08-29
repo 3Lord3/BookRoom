@@ -10,7 +10,7 @@ export function Navbar() {
 
   return (
     <header className="flex h-72 items-center justify-between border-b border-border bg-card px-40">
-      <Link to="/rooms" className="flex items-center gap-12">
+      <Link to="/rooms" className="flex select-none items-center gap-12">
         <img src="/favicon.svg" alt="Логотип BookRoom" className="size-36" />
         <span className="text-5xl font-extrabold">BookRoom</span>
       </Link>
@@ -39,7 +39,7 @@ export function Navbar() {
       {viewer.status === 'success' && (
         <div className="flex items-center gap-12">
           <span className="text-xl font-semibold">{shortDisplayName}</span>
-          <span className="flex size-40 items-center justify-center rounded-full bg-blue-500 font-inter text-xl font-semibold text-white">
+          <span className="flex size-40 select-none items-center justify-center rounded-full bg-blue-500 font-inter text-xl font-semibold text-white">
             {viewer.data.initials}
           </span>
         </div>
