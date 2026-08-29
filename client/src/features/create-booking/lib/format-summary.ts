@@ -5,6 +5,8 @@ import { ru } from 'date-fns/locale';
 import type { Interval } from '@shared/lib/dates';
 import { mskBelt } from '@shared/lib/msk-belt';
 
+import type { Recurrence } from './recurrence';
+
 const pad = (value: number) => String(value).padStart(2, '0');
 
 function zonedTime(iso: string, timezone: string): { hours: number; minutes: number } {
@@ -80,7 +82,15 @@ export function formatOccurrences(count: number): string {
   return `${count} ${pluralRu(count, 'встреча', 'встречи', 'встреч')}`;
 }
 
-// Короткий вид для инфо-плашки: без варианта повтора, чтобы не растягивать строку
+// Как вариант повтора называется в сводке и тосте
+const RECURRENCE_LABELS: Record<Recurrence, string> = {
+  daily: 'ежедневно',
+  weekdays: 'по будням',
+  weekly: 'еженедельно',
+};
+
+// Короткий вид для инфо-плашки: без варианта повтора, иначе плашка переносится
+// на вторую строку. Режим повтора виден в тосте после создания
 export function formatOccurrenceCount(count: number): string {
   return `${count} ${pluralRu(count, 'раз', 'раза', 'раз')}`;
 }
@@ -89,7 +99,10 @@ export function formatSeriesToastDescription(
   roomName: string,
   series: Interval[],
   timezone: string,
+  recurrence: Recurrence,
 ): string {
+  // Пустая серия сюда не доходит: её отсекает submitSeries
   const first = series[0]!;
-  return `${formatOccurrences(series.length)} · ${formatToastDescription(roomName, first, timezone)}`;
+  const count = `${formatOccurrences(series.length)} ${RECURRENCE_LABELS[recurrence]}`;
+  return `${count} · ${formatToastDescription(roomName, first, timezone)}`;
 }

@@ -58,8 +58,8 @@ describe('форматтеры серии', () => {
       { from: FROM, to: TO },
       { from: '2026-08-31T07:00:00.000Z', to: '2026-08-31T08:00:00.000Z' },
     ];
-    expect(formatSeriesToastDescription('Эверест', series, TZ)).toBe(
-      '2 встречи · Комната Эверест, 24 августа, 10:00–11:00 MSK',
+    expect(formatSeriesToastDescription('Эверест', series, TZ, 'weekly')).toBe(
+      '2 встречи еженедельно · Комната Эверест, 24 августа, 10:00–11:00 MSK',
     );
   });
 });

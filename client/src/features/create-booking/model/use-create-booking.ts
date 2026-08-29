@@ -11,14 +11,14 @@ import { API_ERROR_CODES, getApiErrorCode, getApiErrorMessage } from '@shared/ap
 import type { Interval } from '@shared/lib/dates';
 import { buildInterval } from '@shared/lib/dates';
 
-import { createBookingSchema, type BookingForm } from '../lib/booking-schema';
+import { createBookingSchema, occurrencesIssue, type BookingForm } from '../lib/booking-schema';
 import {
   formatOccurrenceCount,
   formatSeriesToastDescription,
   formatSummary,
   formatToastDescription,
 } from '../lib/format-summary';
-import { buildOccurrenceSeries } from '../lib/recurrence';
+import { buildOccurrenceSeries, type Recurrence } from '../lib/recurrence';
 
 // Открывает модалку пустой формой
 const CREATE_KEY = 'create';
@@ -106,9 +106,13 @@ export function useCreateBooking(
       buildInterval(watched.date, watched.startTime, watched.duration, timezone),
       timezone,
     );
+    // Длину серии показываем, только пока схема её принимает: иначе плашка обещает
+    // «999 раз» рядом с ошибкой «Максимум 31 встреча в серии» (а из поля летит и Infinity)
+    const occurrences =
+      watched.repeat && watched.repeat !== 'none' ? (watched.occurrences ?? null) : null;
     summary =
-      watched.repeat && watched.repeat !== 'none' && watched.occurrences
-        ? `${base} · ${formatOccurrenceCount(watched.occurrences)}`
+      occurrences !== null && occurrencesIssue(occurrences) === null
+        ? `${base} · ${formatOccurrenceCount(occurrences)}`
         : base;
   }
 
@@ -137,6 +141,7 @@ export function useCreateBooking(
       roomId,
       buildOccurrenceSeries(built, values.occurrences, values.repeat, timezone),
       values,
+      values.repeat,
     );
   };
 
@@ -173,7 +178,17 @@ export function useCreateBooking(
     }
   };
 
-  const submitSeries = async (room: string, series: Interval[], values: BookingForm) => {
+  const submitSeries = async (
+    room: string,
+    series: Interval[],
+    values: BookingForm,
+    recurrence: Recurrence,
+  ) => {
+    // Валидация пустую серию не пропускает, но без проверки ветка «создано всё»
+    // сработала бы на 0 === 0: ложный тост успеха и падение на series[0]
+    if (series.length === 0) {
+      return;
+    }
     const failed: string[] = [];
     let created = 0;
     setProgress({ done: 0, total: series.length });
@@ -189,7 +204,7 @@ export function useCreateBooking(
     setProgress(null);
     if (created === series.length) {
       toast.success('Бронирование создано', {
-        description: formatSeriesToastDescription(roomName, series, timezone),
+        description: formatSeriesToastDescription(roomName, series, timezone, recurrence),
       });
       close();
     } else if (created === 0) {
@@ -212,10 +227,8 @@ export function useCreateBooking(
     isSubmitting: isLoading || progress !== null,
     progress,
     close,
-    resolveConflict: () => {
-      form.clearErrors('root');
-      clearOpenParams();
-    },
+    // Модалка остаётся открытой с введёнными значениями: меняем только время
+    resolveConflict: () => form.clearErrors('root'),
     submit,
     form,
   };

@@ -3,7 +3,11 @@ import { ru } from 'date-fns/locale';
 import { CalendarIcon, Clock, Users } from 'lucide-react';
 import { useState } from 'react';
 
-import { MAX_AHEAD_DAYS } from '@shared/config/schedule';
+import {
+  MAX_AHEAD_DAYS,
+  MAX_FILTER_DURATION_MINUTES,
+  TIME_STEP_MINUTES,
+} from '@shared/config/schedule';
 import { cn } from '@shared/lib/cn';
 import { todayInTimezone } from '@shared/lib/dates';
 import { Calendar } from '@shared/ui/calendar';
@@ -23,7 +27,11 @@ import { formatDuration } from '../lib/format-duration';
 import { applyTimeMask, isAlignedToStep, isValidTime } from '../lib/time';
 import type { RoomFiltersModel } from '../model/use-room-filters';
 
-const DURATION_OPTIONS = [15, 30, 45, 60, 75, 90, 105, 120] as const;
+// Длительности шагом сетки до потолка фильтров: 15, 30, ... 120 минут
+const DURATION_OPTIONS = Array.from(
+  { length: Math.floor(MAX_FILTER_DURATION_MINUTES / TIME_STEP_MINUTES) },
+  (_, index) => (index + 1) * TIME_STEP_MINUTES,
+);
 const CAPACITY_OPTIONS = [2, 4, 6, 8, 10, 12] as const;
 
 // Обёртка контрола: иконка + значение в рамке

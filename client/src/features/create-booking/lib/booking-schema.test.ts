@@ -75,6 +75,52 @@ describe('createBookingSchema', () => {
     }
   });
 
+  it('не проверяет количество вхождений, когда повтор выключен', () => {
+    // Поле скрыто при repeat === 'none': его ошибку было бы негде показать,
+    // а форма молча перестала бы отправляться
+    const result = schema().safeParse({ ...valid, repeat: 'none', occurrences: 0 });
+    expect(result.success).toBe(true);
+  });
+
+  it('отклоняет заведомо длинную серию, не строя её', () => {
+    const started = performance.now();
+    const result = schema().safeParse({ ...valid, repeat: 'daily', occurrences: 1_000_000 });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const issue = result.error.issues.find((item) => item.path[0] === 'occurrences');
+      expect(issue?.message).toBe('Максимум 31 встреча в серии');
+    }
+    // Раньше проверка горизонта успевала построить всю серию и вешала вкладку
+    expect(performance.now() - started).toBeLessThan(1_000);
+  });
+
+  it('не роняет форму на Infinity и NaN из поля ввода', () => {
+    // Скрытое поле не должно блокировать отправку никаким значением
+    expect(schema().safeParse({ ...valid, repeat: 'none', occurrences: Infinity }).success).toBe(
+      true,
+    );
+    expect(schema().safeParse({ ...valid, repeat: 'none', occurrences: NaN }).success).toBe(true);
+
+    // А при активном повторе про них должно быть понятное русское сообщение
+    const result = schema().safeParse({ ...valid, repeat: 'daily', occurrences: Infinity });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const issue = result.error.issues.find((item) => item.path[0] === 'occurrences');
+      expect(issue?.message).toBe('Максимум 31 встреча в серии');
+    }
+  });
+
+  it('отклоняет дробное количество вхождений отдельным сообщением', () => {
+    // noValidate снял нативную проверку step, так что «2.5» доходит до схемы
+    const result = schema().safeParse({ ...valid, repeat: 'daily', occurrences: 2.5 });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const issue = result.error.issues.find((item) => item.path[0] === 'occurrences');
+      expect(issue?.message).toBe('Введите целое число повторений');
+    }
+  });
+
   it('принимает еженедельный повтор с корректным числом вхождений', () => {
     const result = schema().safeParse({ ...valid, repeat: 'weekly', occurrences: 4 });
     expect(result.success).toBe(true);

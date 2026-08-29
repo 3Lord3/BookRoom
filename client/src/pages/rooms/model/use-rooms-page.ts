@@ -63,6 +63,10 @@ export function useRoomsPage(): RoomsPageModel {
   const rooms = roomsResult.data ?? [];
   const bookingRoomId = searchParams.get(BOOKING_PARAM);
   const bookingRoom = rooms.find((room) => room.id === bookingRoomId) ?? null;
+  // Список загружен, а комнаты из ссылки в нём нет: id устарел (комната удалена,
+  // другой офис, не прошла фильтры) — модалку по нему уже не открыть
+  const staleBookingId =
+    bookingRoomId !== null && roomsResult.data !== undefined && bookingRoom === null;
 
   // Интервал фильтров подставляется в форму; без него модалка открывается пустой
   const booking = useCreateBooking(
@@ -77,14 +81,23 @@ export function useRoomsPage(): RoomsPageModel {
     },
   );
 
-  // Параметр выбранной комнаты живёт, только пока открыта модалка
+  // Параметры живут, только пока открыта модалка: create=1 и id найденной комнаты.
+  // Всё прочее остаётся в URL навсегда, уезжает по ссылке «Подробнее» и открывает там
+  // бронирование чужой комнаты — одинокий create=1 тоже: странице комнаты хватает его
   useEffect(() => {
-    if (searchParams.get(CREATE_PARAM) !== '1' && searchParams.has(BOOKING_PARAM)) {
-      const next = new URLSearchParams(searchParams);
-      next.delete(BOOKING_PARAM);
-      setSearchParams(next, { replace: true });
+    const hasBookingId = searchParams.has(BOOKING_PARAM);
+    if (!hasBookingId && !searchParams.has(CREATE_PARAM)) {
+      return;
     }
-  }, [searchParams, setSearchParams]);
+    // Пока список грузится, комната ещё может найтись
+    if (searchParams.get(CREATE_PARAM) === '1' && hasBookingId && !staleBookingId) {
+      return;
+    }
+    const next = new URLSearchParams(searchParams);
+    next.delete(BOOKING_PARAM);
+    next.delete(CREATE_PARAM);
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams, staleBookingId]);
 
   const book = (room: RoomSummary) => {
     const next = new URLSearchParams(searchParams);

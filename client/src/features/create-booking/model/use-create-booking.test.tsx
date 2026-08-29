@@ -112,7 +112,7 @@ describe('useCreateBooking', () => {
     expect(calls).toBe(3);
     expect(toast.success).toHaveBeenCalledWith(
       'Бронирование создано',
-      expect.objectContaining({ description: expect.stringContaining('3 встречи') }),
+      expect.objectContaining({ description: expect.stringContaining('3 встречи еженедельно') }),
     );
   });
 
@@ -202,7 +202,7 @@ describe('useCreateBooking', () => {
     ]);
     expect(toast.success).toHaveBeenCalledWith(
       'Бронирование создано',
-      expect.objectContaining({ description: expect.stringContaining('3 встречи') }),
+      expect.objectContaining({ description: expect.stringContaining('3 встречи по будням') }),
     );
   });
 });
